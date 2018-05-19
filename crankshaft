@@ -857,12 +857,15 @@ if [ ! -z $1 ]; then
 		if [ "$REMOTE" == "$LOCAL" ]; then
 		    echo "crankshaft management tool is up to date."
 		else
+                    sudo rm /usr/local/bin/crankshaft.update >/dev/null 2>&1
+                    sudo rm /usr/local/bin/crankshaft.old >/dev/null 2>&1
 		    # get source file
 		    sudo wget --no-check-certificate -O /usr/local/bin/crankshaft.update https://raw.githubusercontent.com/hawkeyexp/crankshaft-updates/master/crankshaft
 		    # check download
 		    LOCAL=`wc -c /usr/local/bin/crankshaft.update | awk '{print $1}'`
 		    if [ "$REMOTE" == "$LOCAL" ]; then
-			sudo cp -f /usr/local/bin/crankshaft.new /usr/local/bin/crankshaft
+			sudo mv -f /usr/local/bin/crankshaft /usr/local/bin/crankshaft.old
+			sudo cp -f /usr/local/bin/crankshaft.update /usr/local/bin/crankshaft
 			sudo chmod 777 /usr/local/bin/crankshaft
 			sudo rm /usr/local/bin/crankshaft.update
 			echo "OK: crankshaft management tool updated."
