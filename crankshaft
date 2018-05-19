@@ -682,13 +682,13 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable user_startup.service >/dev/null 2>&1
 		sudo systemctl enable devmode.service >/dev/null 2>&1
 		sudo systemctl enable display.service >/dev/null 2>&1
+		sudo systemctl enable update.service >/dev/null 2>&1
+		sudo systemctl enable user_startup.service >/dev/null 2>&1
 		sudo systemctl disable autoapp.service >/dev/null 2>&1
 		sudo systemctl disable ssh.service >/dev/null 2>&1
-		sudo systemctl enable user_startup.service >/dev/null 2>&1
 		sudo systemctl disable wpa_supplicant.service >/dev/null 2>&1
 		sudo systemctl disable networking.service >/dev/null 2>&1
 		sudo systemctl disable dhcpcd.service >/dev/null 2>&1
-		sudo systemctl disable udevupdate.service >/dev/null 2>&1
 		sudo systemctl disable regenerate_ssh_host_keys.service >/dev/null 2>&1
 		sudo systemctl disable wifisetup.service >/dev/null 2>&1
 		sudo systemctl disable systemd-rfkill.service >/dev/null 2>&1
@@ -847,6 +847,31 @@ if [ ! -z $1 ]; then
 		    fi
 		fi
 		;;
+	    csmt)
+		REMOTE=`wget --no-check-certificate https://raw.githubusercontent.com/hawkeyexp/crankshaft-updates/master/crankshaft --spider --server-response -O - 2>&1 | sed -ne '/Content-Length/{s/.*: //;p}'`
+		if [ -f /usr/local/bin/crankshaft ]; then
+		    LOCAL=`wc -c /usr/local/bin/crankshaft | awk '{print $1}'`
+		else
+		    LOCAL=0
+		fi
+		if [ "$REMOTE" == "$LOCAL" ]; then
+		    echo "crankshaft management tool is up to date."
+		else
+		    # get source file
+		    sudo wget --no-check-certificate -O /usr/local/bin/crankshaft.update https://raw.githubusercontent.com/hawkeyexp/crankshaft-updates/master/crankshaft
+		    # check download
+		    LOCAL=`wc -c /usr/local/bin/crankshaft.update | awk '{print $1}'`
+		    if [ "$REMOTE" == "$LOCAL" ]; then
+			sudo cp -f /usr/local/bin/crankshaft.new > /usr/local/bin/crankshaft
+			sudo chmod 777 /usr/local/bin/crankshaft
+			rm /usr/local/bin/crankshaft.update
+			echo "OK: crankshaft management tool updated."
+		    else
+			sudo rm /usr/local/bin/crankshaft.update
+			echo "Fail: crankshaft management tool not updated."
+		    fi
+		fi
+		;;
 	    *)
 		echo "Syntax: crankshaft update udev"
 		;;
@@ -938,6 +963,7 @@ else
     echo ""
     echo "update                        Handle Updates"
     echo "     |- udev                  - Check And Update udev Rules For Device Detection"
+    echo "     |- csmt                  - Check And Update Crankshaft Management Tool"
 fi
 
 exit 0
