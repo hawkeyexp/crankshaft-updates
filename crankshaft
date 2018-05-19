@@ -1,0 +1,943 @@
+#!/bin/bash
+
+source /opt/crankshaft/crankshaft_default_env.sh
+source /opt/crankshaft/crankshaft_system_env.sh
+source /boot/crankshaft/crankshaft_env.sh
+
+CS_BRIGHTNESS_STORE_FILE=/boot/crankshaft/brightness
+
+# Abort if file does not exist
+
+if [ ! -z $1 ]; then
+    if [ $1 != "display" ] && [ $1 != "brightness" ] && [ $1 != "filesystem" ] && [ $1 != "timers" ] && [ $1 != "settings" ] && [ $1 != "services" ] && [ $1 != "update" ] && [ $1 != "audio" ] && [ $1 != "rtc" ] && [ $1 != "reset" ]; then
+	echo "Unknown command:"
+	echo "Syntax: crankshaft display|brightness|filesystem|timers|audio|settings|services|update"
+	exit 0
+    fi
+    # brightness
+    if [ $1 == "brightness" ]; then
+        case $2 in
+	    save)
+		if [ -f ${BRIGHTNESS_FILE} ]; then
+		    if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			sudo mount -o remount,rw /boot
+		    fi
+		    cat ${BRIGHTNESS_FILE} > ${CS_BRIGHTNESS_STORE_FILE}
+		    echo "Brightness Level Saved"
+		    if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			sudo mount -o remount,ro /boot
+		    fi
+		else
+        	    echo "No device brightness file present"
+
+		fi
+		;;
+	    restore)
+		if [ -f ${BRIGHTNESS_FILE} ]; then
+		    if [ -f ${CS_BRIGHTNESS_STORE_FILE} ]; then
+			sudo cat ${CS_BRIGHTNESS_STORE_FILE} > ${BRIGHTNESS_FILE}
+		    else
+			echo ${BR_MAX} > ${BRIGHTNESS_FILE}
+			echo "Brightness Level Restored"
+		    fi
+		else
+    		    echo "No device brightness file present"
+		fi
+		;;
+	    up)
+		if [ -f ${BRIGHTNESS_FILE} ]; then
+		    LVL=`cat ${BRIGHTNESS_FILE}`
+		    if [ $((${LVL} + ${BR_STEP})) -le ${BR_MAX} ]; then
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,rw /boot
+			fi
+			echo $((${LVL} + ${BR_STEP})) > ${BRIGHTNESS_FILE}
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,ro /boot
+			fi
+			echo "Brightness Level Increased To: $((${LVL} + ${BR_STEP}))"
+		    fi
+		else
+    		    echo "No device brightness file present"
+		fi
+		;;
+	    down)
+		if [ -f ${BRIGHTNESS_FILE} ]; then
+		    LVL=`cat ${BRIGHTNESS_FILE}`
+		    if [ $((${LVL} - ${BR_STEP})) -ge ${BR_MIN} ]; then
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,rw /boot
+			fi
+			echo $((${LVL} - ${BR_STEP})) > ${BRIGHTNESS_FILE}
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,ro /boot
+			fi
+			echo "Brightness Level Reduced To: $((${LVL} + ${BR_STEP}))"
+		    fi
+		else
+    		    echo "No device brightness file present"
+		fi
+		;;
+	    set)
+		if [ ! -z $3 ]; then
+		    if [ $3 == "min" ]; then
+			if [ -f ${BRIGHTNESS_FILE} ]; then
+			    if [ ! -f /tmp/dev_mode_enabled ] ; then
+    				sudo mount -o remount,rw /boot
+			    fi
+			    echo ${BR_MIN} > ${BRIGHTNESS_FILE}
+			    sudo cat ${BRIGHTNESS_FILE} > ${CS_BRIGHTNESS_STORE_FILE}
+			    if [ ! -f /tmp/dev_mode_enabled ] ; then
+    				sudo mount -o remount,ro /boot
+			    fi
+			else
+    			    echo "No device brightness file present"
+			fi
+		    elif [ $3 == "max" ]; then
+			if [ -f ${BRIGHTNESS_FILE} ]; then
+			    if [ ! -f /tmp/dev_mode_enabled ] ; then
+    				sudo mount -o remount,rw /boot
+			    fi
+			    echo ${BR_MAX} > ${BRIGHTNESS_FILE}
+			    sudo cat ${BRIGHTNESS_FILE} > ${CS_BRIGHTNESS_STORE_FILE}
+			    if [ ! -f /tmp/dev_mode_enabled ] ; then
+    				sudo mount -o remount,ro /boot
+			    fi
+			else
+    			    echo "No device brightness file present"
+			fi
+		    else
+			echo "Syntax: crankshaft brightness set min|max"
+		    fi
+		else
+		    echo "Syntax: crankshaft brightness set min|max"
+		fi
+		;;
+	    get)
+		if [ ! -z $3 ]; then
+		    if [ $3 == "location" ]; then
+			echo ${BRIGHTNESS_FILE}
+		    elif [ $3 == "level" ]; then
+			if [ -f ${BRIGHTNESS_FILE} ]; then
+			    # get current brightness level
+			    LVL=`cat ${BRIGHTNESS_FILE}`
+			    echo "Cutrent Brightness Level: $LVL"
+			else
+    			    echo "No device brightness file present"
+			fi
+		    else
+			echo "Syntax: crankshaft brightness get location|level"
+		    fi
+		else
+		    echo "Syntax: crankshaft brightness get location|level"
+		fi
+		;;
+	    *)
+		echo "Syntax: crankshaft brightness save|restore|up|down|set|get"
+		;;
+	esac
+    fi
+
+    # filesystem
+    if [ $1 == "filesystem" ]; then
+	case $2 in
+	    system)
+		if [ ! -z $3 ]; then
+		    if [ $3 == "unlock" ]; then
+	    		sudo mount -o remount,rw /
+		    elif [ $3 == "lock" ]; then
+			sudo mount -o remount,ro /
+		    else
+			echo "Syntax: crankshaft filesystem system lock|unlock"
+		    fi
+		else
+		    echo "Syntax: crankshaft filesystem system lock|unlock"
+		fi
+		;;
+	    boot)
+		if [ ! -z $3 ]; then
+		    if [ $3 == "unlock" ]; then
+	    		sudo mount -o remount,rw /boot
+		    elif [ $3 == "lock" ]; then
+			sudo mount -o remount,ro /boot
+		    else
+			echo "Syntax: crankshaft filesystem boot lock|unlock"
+		    fi
+		else
+		    echo "Syntax: crankshaft filesystem boot lock|unlock"
+		fi
+		;;
+	    *)
+		echo "Syntax: crankshaft filesystem system|boot"
+		;;
+	esac
+    fi
+
+    #timers
+    if [ $1 == "timers" ]; then
+	case $2 in
+	    status)
+	    	sudo systemctl list-timers --all --no-pager
+		;;
+	    disconnect)
+		if [ ! -z $3 ]; then
+		    if [ $3 == "stop" ]; then
+			sudo systemctl stop disconnect.timer
+			sudo systemctl stop disconnect.service
+		    elif [ $3 == "start" ]; then
+			sudo systemctl start disconnect.timer
+		    else
+			echo "Syntax: crankshaft timers disconnect start|stop"
+		    fi
+		else
+		    echo "Syntax: crankshaft timers disconnect start|stop"
+		fi
+		;;
+
+	    shutdown)
+		if [ ! -z $3 ]; then
+		    if [ $3 == "stop" ]; then
+			sudo systemctl stop shutdown.timer
+			sudo systemctl stop shutdown.service
+		    elif [ $3 == "start" ]; then
+			sudo systemctl start shutdown.timer
+		    else
+			echo "Syntax: crankshaft timers shutdown start|stop"
+		    fi
+		else
+		    echo "Syntax: crankshaft timers shutdown start|stop"
+		fi
+		;;
+	    stop)
+		sudo systemctl stop disconnect.timer
+		sudo systemctl stop disconnect.service
+		sudo systemctl stop shutdown.timer
+		sudo systemctl stop shutdown.service
+		;;
+	    start)
+		sudo systemctl start disconnect.timer
+		sudo systemctl start shutdown.timer
+		;;
+	    *)
+		echo "Syntax: crankshaft timers status|shutdown|disconnect|start|stop"
+		;;
+	esac
+    fi
+
+    #audio
+    if [ $1 == "audio" ]; then
+	case $2 in
+	    rpi)
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
+		sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
+		sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
+		sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+	        sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
+		sudo sh -c "echo 'dtparam=audio=on' >> /boot/config.txt"
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    hifiberry)
+		if [ ! -z $3 ]; then
+		    if [ $3 == "dac" ]; then
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,rw /boot
+			fi
+			    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
+			    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
+			    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
+			    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
+			    sudo sed -i '/./,/^$/!d' /boot/config.txt
+			    sudo sh -c "echo '' >> /boot/config.txt"
+			    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
+			    sudo sh -c "echo 'dtoverlay=hifiberry-dac' >> /boot/config.txt"
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,ro /boot
+			fi
+			echo "Reboot needed to activate!"
+		    elif [ $3 == "dacplus" ]; then
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,rw /boot
+			fi
+			    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
+			    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
+			    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
+			    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
+			    sudo sed -i '/./,/^$/!d' /boot/config.txt
+			    sudo sh -c "echo '' >> /boot/config.txt"
+			    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
+			    sudo sh -c "echo 'dtoverlay=hifiberry-dacplus' >> /boot/config.txt"
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,ro /boot
+			fi
+			echo "Reboot needed to activate!"
+		    elif [ $3 == "digi" ]; then
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,rw /boot
+			fi
+			    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
+			    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
+			    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
+			    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
+			    sudo sed -i '/./,/^$/!d' /boot/config.txt
+			    sudo sh -c "echo '' >> /boot/config.txt"
+			    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
+			    sudo sh -c "echo 'dtoverlay=hifiberry-digi' >> /boot/config.txt"
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,ro /boot
+			fi
+			echo "Reboot needed to activate!"
+		    elif [ $3 == "amp" ]; then
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,rw /boot
+			fi
+			    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
+			    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
+			    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
+			    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
+			    sudo sed -i '/./,/^$/!d' /boot/config.txt
+			    sudo sh -c "echo '' >> /boot/config.txt"
+			    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
+			    sudo sh -c "echo 'dtoverlay=hifiberry-amp' >> /boot/config.txt"
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+    			    sudo mount -o remount,ro /boot
+			fi
+			echo "Reboot needed to activate!"
+		    else
+			echo "Syntax: crankshaft audio hifiberry dac|dacplus|digi|amp"
+		    fi
+		else
+		    echo "Syntax: crankshaft audio hifiberry dac|dacplus|digi|amp"
+		fi
+		;;
+	    *)
+		echo "Syntax: crankshaft audio rpi|hifiberry"
+		;;
+	esac
+    fi
+
+    #display
+    if [ $1 == "display" ]; then
+	case $2 in
+	    on)
+		sudo vcgencmd display_power 1
+		if [ -f /sys/class/backlight/rpi_backlight/bl_power ]; then
+		    sudo echo 0 > /sys/class/backlight/rpi_backlight/bl_power
+		fi
+		;;
+	    off)
+		sudo vcgencmd display_power 0
+		if [ -f /sys/class/backlight/rpi_backlight/bl_power ]; then
+		    sudo echo 1 > /sys/class/backlight/rpi_backlight/bl_power
+		fi
+		;;
+	    *)
+		echo "Syntax: crankshaft display on|off"
+		;;
+	esac
+    fi
+
+    #settings
+    if [ $1 == "settings" ]; then
+	case $2 in
+	    save)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		# Copy settings file
+		sudo cp -f /tmp/openauto.ini /boot/crankshaft/openauto.ini
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		;;
+	    restore)
+		if [ -f /boot/crankshaft/openauto.ini ]; then
+		    sudo cp -f /boot/crankshaft/openauto.ini /tmp/openauto.ini
+		else
+		    echo "[General]" > /tmp/openauto.ini
+		    echo "ShowClock=false" >> /tmp/openauto.ini
+		    echo "[Video]" >> /tmp/openauto.ini
+		    echo "FPS=1" >> /tmp/openauto.ini
+		    echo "OMXLayerIndex=0" >> /tmp/openauto.ini
+		fi
+		sudo chown pi:pi /tmp/openauto.ini
+		sudo chmod 777 /tmp/openauto.ini
+		;;
+	    *)
+		echo "Syntax: crankshaft settings save|restore"
+		;;
+	esac
+    fi
+
+    #rtc
+    if [ $1 == "rtc" ]; then
+	case $2 in
+	    abx80x)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup clock
+		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+    		sudo sed -i '/i2c*/d' /etc/modules
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /etc/modules
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
+		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
+		sudo sh -c 'echo "dtoverlay=i2c-rtc,abx80x" >> /boot/config.txt'
+		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
+		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
+		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
+		sudo systemd daemon-reload
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    ds1307)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup clock
+		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+    		sudo sed -i '/i2c*/d' /etc/modules
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /etc/modules
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
+		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
+		sudo sh -c 'echo "dtoverlay=i2c-rtc,ds1307" >> /boot/config.txt'
+		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
+		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
+		sudo systemctl disable fake-hwclock.service
+		sudo systemd daemon-reload
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    ds1339)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup clock
+		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+    		sudo sed -i '/i2c*/d' /etc/modules
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /etc/modules
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
+		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
+		sudo sh -c 'echo "dtoverlay=i2c-rtc,ds1339" >> /boot/config.txt'
+		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
+		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
+		sudo systemctl disable fake-hwclock.service
+		sudo systemd daemon-reload
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    mcp7940x)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup clock
+		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+    		sudo sed -i '/i2c*/d' /etc/modules
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /etc/modules
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
+		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
+		sudo sh -c 'echo "dtoverlay=i2c-rtc,mcp7940x" >> /boot/config.txt'
+		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
+		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
+		sudo systemctl disable fake-hwclock.service
+		sudo systemd daemon-reload
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    mcp7941x)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup clock
+		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+    		sudo sed -i '/i2c*/d' /etc/modules
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /etc/modules
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
+		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
+		sudo sh -c 'echo "dtoverlay=i2c-rtc,mcp7941x" >> /boot/config.txt'
+		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
+		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
+		sudo systemctl disable fake-hwclock.service
+		sudo systemd daemon-reload
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    ds3231)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup clock
+		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+    		sudo sed -i '/i2c*/d' /etc/modules
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /etc/modules
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
+		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
+		sudo sh -c 'echo "dtoverlay=i2c-rtc,ds3231" >> /boot/config.txt'
+		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
+		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
+		sudo systemctl disable fake-hwclock.service
+		sudo systemd daemon-reload
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    pcf2127)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup clock
+		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+    		sudo sed -i '/i2c*/d' /etc/modules
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /etc/modules
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
+		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
+		sudo sh -c 'echo "dtoverlay=i2c-rtc,pcf2127" >> /boot/config.txt'
+		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
+		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
+		sudo systemctl disable fake-hwclock.service
+		sudo systemd daemon-reload
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    pcf8523)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup clock
+		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+    		sudo sed -i '/i2c*/d' /etc/modules
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /etc/modules
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
+		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
+		sudo sh -c 'echo "dtoverlay=i2c-rtc,pcf8523" >> /boot/config.txt'
+		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
+		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
+		sudo systemctl disable fake-hwclock.service
+		sudo systemd daemon-reload
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    pcf8563)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup clock
+		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+    		sudo sed -i '/i2c*/d' /etc/modules
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /etc/modules
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
+		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
+		sudo sh -c 'echo "dtoverlay=i2c-rtc,pcf8563" >> /boot/config.txt'
+		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
+		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
+		sudo systemctl disable fake-hwclock.service
+		sudo systemd daemon-reload
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    sync)
+		# sync rtc time with sys
+		sudo hwclock -s >/dev/null 2>&1
+		# try sync with timeserver
+		ping -c1 -w1 google.com >/dev/null 2>&1
+		if [ "$?" = 0 ]
+		then
+		    echo "---------------------------------------------------------"
+		    echo "Internet connection present. Syncing RTC with time server"
+		    echo "---------------------------------------------------------"
+		    # disable/enable timesyncd to trigger resync
+		    sudo timedatectl set-ntp 0
+		    sudo timedatectl set-ntp 1
+		    echo "---------------------------------------------------------"
+		    echo "Wait for timesync..."
+		    echo "---------------------------------------------------------"
+		    sleep 10
+		    # write time from server to hwclock
+		    sudo hwclock -w >/dev/null 2>&1
+		    # write time from hwclock to sys
+		    sudo hwclock -s >/dev/null 2>&1
+		    # show result
+		    sudo timedatectl status
+		    echo ""
+		    cat /var/log/syslog | grep Synchronized | tail -n1 | awk {'print $3" "$6" "$7" "$8" "$9" "$10'}
+		else
+		    echo "---------------------------------------------------------"
+		    echo "No internet connection!"
+		    echo "---------------------------------------------------------"
+		fi
+		;;
+	    disable)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup clock
+		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
+    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+    		sudo sed -i '/i2c*/d' /etc/modules
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /etc/modules
+		sudo cp -f /lib/udev/hwclock-set.org /lib/udev/hwclock-set
+		sudo systemctl enable fake-hwclock.service
+		sudo systemd daemon-reload
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		;;
+	    *)
+		echo "Syntax: crankshaft rtc abx80x|ds1307|ds1339|mcp7940x|mcp7941x|ds3231|pcf2127|pcf8523|pcf8563|sync|disable"
+		;;
+	esac
+    fi
+
+    #services
+    if [ $1 == "services" ]; then
+	case $2 in
+	    reset)
+		# Set default startup services state
+		sudo systemctl enable gpio2kbd.service >/dev/null 2>&1
+		sudo systemctl enable crankshaft.service >/dev/null 2>&1
+		sudo systemctl enable user_startup.service >/dev/null 2>&1
+		sudo systemctl enable devmode.service >/dev/null 2>&1
+		sudo systemctl enable display.service >/dev/null 2>&1
+		sudo systemctl disable autoapp.service >/dev/null 2>&1
+		sudo systemctl disable ssh.service >/dev/null 2>&1
+		sudo systemctl enable user_startup.service >/dev/null 2>&1
+		sudo systemctl disable wpa_supplicant.service >/dev/null 2>&1
+		sudo systemctl disable networking.service >/dev/null 2>&1
+		sudo systemctl disable dhcpcd.service >/dev/null 2>&1
+		sudo systemctl disable udevupdate.service >/dev/null 2>&1
+		sudo systemctl disable regenerate_ssh_host_keys.service >/dev/null 2>&1
+		sudo systemctl disable wifisetup.service >/dev/null 2>&1
+		sudo systemctl disable systemd-rfkill.service >/dev/null 2>&1
+		sudo systemctl disable systemd-rfkill.socket >/dev/null 2>&1
+		sudo systemctl disable systemd-timesyncd.service >/dev/null 2>&1
+		sudo systemctl daemon-reload >/dev/null 2>&1
+		;;
+	    status)
+		systemctl list-units --type=service --state=active | grep 'Crankshaft\|UNIT'
+		;;
+	    *)
+		echo "Syntax: crankshaft services status|reset"
+		;;
+	esac
+    fi
+
+    #reset
+    if [ $1 == "reset" ]; then
+	case $2 in
+	    config.txt)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+
+		# get custom display and power params
+
+		# display
+		hdmi_group=`cat /boot/config.txt | grep ^hdmi_group= | cut -d= -f2`
+		hdmi_mode=`cat /boot/config.txt | grep ^hdmi_mode= | cut -d= -f2`
+		hdmi_cvt=`cat /boot/config.txt | grep ^hdmi_cvt= | cut -d= -f2`
+		hdmi_drive=`cat /boot/config.txt | grep ^hdmi_drive= | cut -d= -f2`
+		hdmi_force_hotplug=`cat /boot/config.txt | grep ^hdmi_force_hotplug= | cut -d= -f2`
+		config_hdmi_boost=`cat /boot/config.txt | grep ^config_hdmi_boost= | cut -d= -f2`
+
+		# power
+		current_limit_override=`cat /boot/config.txt | grep ^current_limit_override= | cut -d= -f2`
+		max_usb_current=`cat /boot/config.txt | grep ^max_usb_current= | cut -d= -f2`
+		avoid_warnings=`cat /boot/config.txt | grep ^avoid_warnings= | cut -d= -f2`
+
+		# Clear config.txt		
+		sudo sh -c "echo '' > /boot/config.txt"
+
+		# Custom Display settings
+		if [ ! -z "$hdmi_group" ] || [ ! -z "$hdmi_mode" ] || [ ! -z "$hdmi_cvt" ] || [ ! -z "$hdmi_drive" ] || [ ! -z "$hdmi_force_hotplug" ] || [ ! -z "$config_hdmi_boost" ]; then
+		    sudo sh -c "echo '' >> /boot/config.txt"
+		    sudo sh -c "echo '# Custom display settings' >> /boot/config.txt"
+		    if [ ! -z "$hdmi_group" ]; then
+			sudo sh -c "echo 'hdmi_group=$hdmi_group' >> /boot/config.txt"
+		    fi
+		    if [ ! -z "$hdmi_mode" ]; then
+			sudo sh -c "echo 'hdmi_mode=$hdmi_mode' >> /boot/config.txt"
+		    fi
+		    if [ ! -z "$hdmi_cvt" ]; then
+			sudo sh -c "echo 'hdmi_cvt=$hdmi_cvt' >> /boot/config.txt"
+		    fi
+		    if [ ! -z "$hdmi_drive" ]; then
+			sudo sh -c "echo 'hdmi_drive=$hdmi_drive' >> /boot/config.txt"
+		    fi
+		    if [ ! -z "$hdmi_force_hotplug" ]; then
+			sudo sh -c "echo 'hdmi_force_hotplug=$hdmi_force_hotplug' >> /boot/config.txt"
+		    fi
+		    if [ ! -z "$config_hdmi_boost" ]; then
+			sudo sh -c "echo 'config_hdmi_boost=$config_hdmi_boost' >> /boot/config.txt"
+		    fi
+		fi
+
+		# Custom power settings
+		if [ ! -z "$current_limit_override" ] || [ ! -z "$max_usb_current" ] || [ ! -z "$avoid_warnings" ]; then
+		    sudo sh -c "echo '' >> /boot/config.txt"
+		    sudo sh -c "echo '# Custom power settings' >> /boot/config.txt"
+		    if [ ! -z "$current_limit_override" ]; then
+			sudo sh -c "echo 'current_limit_override=$current_limit_override' >> /boot/config.txt"
+		    fi
+		    if [ ! -z "$max_usb_current" ]; then
+			sudo sh -c "echo 'max_usb_current=$max_usb_current' >> /boot/config.txt"
+		    fi
+		    if [ ! -z "$avoid_warnings" ]; then
+			sudo sh -c "echo 'avoid_warnings=$avoid_warnings' >> /boot/config.txt"
+		    fi
+		fi
+
+		# Crankshaft Base params
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# Disable Rainbow splash' >> /boot/config.txt"
+		sudo sh -c "echo 'disable_splash=1' >> /boot/config.txt"
+
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# Disable the PWR LED.' >> /boot/config.txt"
+		sudo sh -c "echo 'dtparam=pwr_led_trigger=none' >> /boot/config.txt"
+		sudo sh -c "echo 'dtparam=pwr_led_activelow=off' >> /boot/config.txt"
+
+	        sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
+		sudo sh -c "echo 'dtparam=audio=on' >> /boot/config.txt"
+
+	        sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# GPU Mem' >> /boot/config.txt"
+		sudo sh -c "echo 'gpu_mem=256' >> /boot/config.txt"
+
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "    Reboot needed to activate!"
+		echo " --- Check config.txt before! ---"
+		;;
+	    *)
+		echo "Syntax: crankshaft reset config.txt"
+		;;
+	esac
+    fi
+
+    #updates
+    if [ $1 == "update" ]; then
+	case $2 in
+	    udev)
+		REMOTE=`wget --no-check-certificate https://raw.githubusercontent.com/hawkeyexp/android-udev-rules/master/51-android.rules --spider --server-response -O - 2>&1 | sed -ne '/Content-Length/{s/.*: //;p}'`
+		if [ -f /etc/udev/rules.d/51-android.master ]; then
+		    LOCAL=`wc -c /etc/udev/rules.d/51-android.master | awk '{print $1}'`
+		else
+		    LOCAL=0
+		fi
+		if [ "$REMOTE" == "$LOCAL" ]; then
+		    echo "udev rules are up to date."
+		else
+		    # get source file
+		    sudo wget --no-check-certificate -O /etc/udev/rules.d/51-android.master https://raw.githubusercontent.com/hawkeyexp/android-udev-rules/master/51-android.rules
+		    # check download
+		    LOCAL=`wc -c /etc/udev/rules.d/51-android.master | awk '{print $1}'`
+		    if [ "$REMOTE" == "$LOCAL" ]; then
+			# File which will be transformed
+			DEST=/etc/udev/rules.d/51-android.rules
+			sudo touch /etc/udev/rules.d/51-android.rules
+			sudo chmod 666 /etc/udev/rules.d/51-android.rules
+			# add master stuff
+			echo '' > $DEST
+			cat /etc/udev/rules.d/51-android.master >> $DEST
+			# Add action
+			sudo sed -i 's/GROUP="plugdev"$/GROUP="plugdev", RUN+="\/opt\/crankshaft\/usb_action.sh '\''%E\{DEVNAME\}'\''"/' $DEST
+			# Add disconnect action
+			echo '' >> $DEST
+			echo '# Disconnect action' >> $DEST
+			echo 'SUBSYSTEM=="usb", ACTION=="remove", RUN+="/opt/crankshaft/usb_action.sh '\''%E{DEVNAME}'\''"' >> $DEST
+			# Add disconnect action
+			echo '' >> $DEST
+			echo '# Skip action' >> $DEST
+			echo 'LABEL="SKIP_DEVICE"' >> $DEST
+			echo '' >> $DEST
+			# Reload rules
+			sudo udevadm control --reload-rules
+			echo "OK: udev rules updated."
+		    else
+			sudo rm /etc/udev/rules.d/51-android.master
+			echo "Fail: udev rules not updated."
+		    fi
+		fi
+		;;
+	    *)
+		echo "Syntax: crankshaft update udev"
+		;;
+	esac
+    fi
+
+else
+    echo ""
+    echo "crankshaft's known commands:"
+    echo "----------------------------"
+    echo ""
+    echo "display                       Handle Display"
+    echo "      |- on                   - Enable Display"
+    echo "      |- off                  - Disable Display"
+    echo ""
+    echo "brightness                    Handle Display Backlight"
+    echo "         |- up                - Increase Brightness"
+    echo "         |- down              - Decrease Brightness"
+    echo "         |- save              - Save Brightness Level"
+    echo "         |- restore           - Restore Brightness Level"
+    echo "         |- get"
+    echo "              |- level        - Get Current Brighntess Level"
+    echo "              |- location     - Get Device Brightness File Location"
+    echo "         |- set"
+    echo "              |- min          - Set Display Brightness To Min"
+    echo "              |- max          - Set Display Brightness To Max"
+    echo ""
+    echo "filesystem                    Handle Filesystem"
+    echo "         |- boot"
+    echo "               |- lock        - Re-Mount /boot As Read Only"
+    echo "               |- unlock      - Re-Mount /boot As Read Write"
+    echo "         |- system"
+    echo "                 |- lock      - Re-Mount / As Read Only"
+    echo "                 |- unlock    - Re-Mount / As Read Write"
+    echo ""
+    echo "timers                        Handle Timers"
+    echo "     |- status                - List Current Timers"
+    echo "     |- start                 - Start All Timers"
+    echo "     |- stop                  - Stop All Timers"
+    echo "     |- disconnect"
+    echo "                 |- start     - Start Timer Disconnect"
+    echo "                 |- stop      - Stop Timer Disconnect"
+    echo "     |- shutdown"
+    echo "               |- start       - Start Timer Shutdown"
+    echo "               |- stop        - Stop Timer Shutdown"
+    echo ""
+    echo "audio                         Handle Audio Output"
+    echo "    |- rpi                    - Enable default rpi audio"
+    echo "    |- hifiberry"
+    echo "               |- dac         - Hifiberry DAC RPi 1 / DAC+ Light / DAC Zero / MiniAmp"
+    echo "               |- dacplus     - Hifiberry DAC+ Standard / Pro / Plus"
+    echo "               |- digi        - Hifiberry DIGI / DIGI+"
+    echo "               |- amp         - Hifiberry AMP+ (Not AMP2!)"
+    echo ""
+    echo "settings                      Handle Openauto Settings"
+    echo "       |- save                - Save Openauto.ini"
+    echo "       |- retore              - Restore Openauto.ini"
+    echo ""
+    echo "services                      Handle Systemd Services"
+    echo "       |- reset               - Re-Init Default Boot State Of Services"
+    echo "       |- status              - List State Of Cranshaft Services"
+    echo ""
+    echo "rtc                           Handle Real Time Clock"
+    echo "  |- abx80x"
+    echo "  |- ds1307"
+    echo "  |- ds1339"
+    echo "  |- mcp7940x"
+    echo "  |- mcp7941x"
+    echo "  |- ds3231                   - Type of RTC" 
+    echo "  |- pcf2127"
+    echo "  |- pcf8523"
+    echo "  |- pcf8563"
+    echo "  |- sync                     - Sync timeserver to system time to rtc"
+    echo "  |- disable"
+    echo ""
+    echo "reset                         Handle Resets"
+    echo "    |- config.txt             - Reset config.txt to defaults - Danger!!!"
+    echo "                                Custom settings will be dropped but script tries"
+    echo "                                to safe custom display and power settings:"
+    echo "                                - hdmi_group="
+    echo "                                - hdmi_mode="
+    echo "                                - hdmi_cvt="
+    echo "                                - hdmi_drive="
+    echo "                                - hdmi_force_hotplug="
+    echo "                                - config_hdmi_boost="
+    echo "                                - current_limit_override="
+    echo "                                - max_usb_current="
+    echo "                                - avoid_warnings="
+    echo ""
+    echo "update                        Handle Updates"
+    echo "     |- udev                  - Check And Update udev Rules For Device Detection"
+fi
+
+exit 0
