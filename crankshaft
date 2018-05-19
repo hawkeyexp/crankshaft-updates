@@ -864,7 +864,7 @@ if [ ! -z $1 ]; then
 		    if [ "$REMOTE" == "$LOCAL" ]; then
 			sudo cp -f /usr/local/bin/crankshaft.new > /usr/local/bin/crankshaft
 			sudo chmod 777 /usr/local/bin/crankshaft
-			rm /usr/local/bin/crankshaft.update
+			sudo rm /usr/local/bin/crankshaft.update
 			echo "OK: crankshaft management tool updated."
 		    else
 			sudo rm /usr/local/bin/crankshaft.update
@@ -967,3 +967,4 @@ else
 fi
 
 exit 0
+
