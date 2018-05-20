@@ -440,6 +440,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
+                sudo dpkg-reconfigure tzdata
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,ro /boot
@@ -467,6 +468,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
+                sudo dpkg-reconfigure tzdata
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,ro /boot
@@ -494,6 +496,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
+                sudo dpkg-reconfigure tzdata
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,ro /boot
@@ -521,6 +524,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
+                sudo dpkg-reconfigure tzdata
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,ro /boot
@@ -548,6 +552,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
+                sudo dpkg-reconfigure tzdata
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,ro /boot
@@ -575,6 +580,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
+                sudo dpkg-reconfigure tzdata
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,ro /boot
@@ -602,6 +608,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
+                sudo dpkg-reconfigure tzdata
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,ro /boot
@@ -629,6 +636,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
+                sudo dpkg-reconfigure tzdata
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,ro /boot
@@ -656,6 +664,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
+                sudo dpkg-reconfigure tzdata
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,ro /boot
