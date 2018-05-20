@@ -9,9 +9,9 @@ CS_BRIGHTNESS_STORE_FILE=/boot/crankshaft/brightness
 # Abort if file does not exist
 
 if [ ! -z $1 ]; then
-    if [ $1 != "display" ] && [ $1 != "brightness" ] && [ $1 != "filesystem" ] && [ $1 != "timers" ] && [ $1 != "settings" ] && [ $1 != "services" ] && [ $1 != "update" ] && [ $1 != "audio" ] && [ $1 != "rtc" ] && [ $1 != "reset" ]; then
+    if [ $1 != "display" ] && [ $1 != "brightness" ] && [ $1 != "filesystem" ] && [ $1 != "timers" ] && [ $1 != "settings" ] && [ $1 != "services" ] && [ $1 != "update" ] && [ $1 != "audio" ] && [ $1 != "rtc" ] && [ $1 != "reset" ] && [ $1 != "rpicam" ]; then
 	echo "Unknown command:"
-	echo "Syntax: crankshaft display|brightness|filesystem|timers|audio|settings|services|update"
+	echo "Syntax: crankshaft display|brightness|filesystem|timers|audio|settings|services|rpicam|reset|update"
 	exit 0
     fi
     # brightness
@@ -876,11 +876,52 @@ if [ ! -z $1 ]; then
 		fi
 		;;
 	    *)
-		echo "Syntax: crankshaft update udev"
+		echo "Syntax: crankshaft update udev|csmt"
 		;;
 	esac
     fi
 
+    #rpi cam
+    if [ $1 == "rpicam" ]; then
+	case $2 in
+	    enable)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup cam
+		sudo sed -i 's/^# RPI Camera Module.*//' /boot/config.txt
+    		sudo sed -i '/start_x/d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		sudo sh -c "echo '' >> /boot/config.txt"
+		sudo sh -c "echo '# RPI Camera Module' >> /boot/config.txt"
+		sudo sh -c 'echo "start_x=1" >> /boot/config.txt'
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    disable)
+		# mount /boot rw for saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,rw /boot
+		fi
+		#setup cam
+		sudo sed -i 's/^# RPI Camera Module.*//' /boot/config.txt
+    		sudo sed -i '/start_x/d' /boot/config.txt
+		sudo sed -i '/./,/^$/!d' /boot/config.txt
+		# mount /boot ro after saving if not in dev mode
+		if [ ! -f /tmp/dev_mode_enabled ] ; then
+    		    sudo mount -o remount,ro /boot
+		fi
+		echo "Reboot needed to activate!"
+		;;
+	    *)
+		echo "Syntax: crankshaft rpicam enable|disable"
+		;;
+	esac
+    fi
 else
     echo ""
     echo "crankshaft's known commands:"
@@ -963,6 +1004,10 @@ else
     echo "                                - current_limit_override="
     echo "                                - max_usb_current="
     echo "                                - avoid_warnings="
+    echo ""
+    echo "rpicam                        Handle Updates"
+    echo "     |- enable                - Enable rpi camera module"
+    echo "     |- disable               - Disable rpi camera module"
     echo ""
     echo "update                        Handle Updates"
     echo "     |- udev                  - Check And Update udev Rules For Device Detection"
