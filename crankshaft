@@ -436,8 +436,9 @@ if [ ! -z $1 ]; then
 		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
 		sudo sh -c 'echo "dtoverlay=i2c-rtc,abx80x" >> /boot/config.txt'
 		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
 		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
@@ -462,8 +463,9 @@ if [ ! -z $1 ]; then
 		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
 		sudo sh -c 'echo "dtoverlay=i2c-rtc,ds1307" >> /boot/config.txt'
 		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
-		sudo systemctl disable fake-hwclock.service
+		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
@@ -488,8 +490,9 @@ if [ ! -z $1 ]; then
 		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
 		sudo sh -c 'echo "dtoverlay=i2c-rtc,ds1339" >> /boot/config.txt'
 		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
-		sudo systemctl disable fake-hwclock.service
+		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
@@ -514,8 +517,9 @@ if [ ! -z $1 ]; then
 		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
 		sudo sh -c 'echo "dtoverlay=i2c-rtc,mcp7940x" >> /boot/config.txt'
 		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
-		sudo systemctl disable fake-hwclock.service
+		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
@@ -540,8 +544,9 @@ if [ ! -z $1 ]; then
 		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
 		sudo sh -c 'echo "dtoverlay=i2c-rtc,mcp7941x" >> /boot/config.txt'
 		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
-		sudo systemctl disable fake-hwclock.service
+		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
@@ -566,8 +571,9 @@ if [ ! -z $1 ]; then
 		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
 		sudo sh -c 'echo "dtoverlay=i2c-rtc,ds3231" >> /boot/config.txt'
 		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
-		sudo systemctl disable fake-hwclock.service
+		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
@@ -592,8 +598,9 @@ if [ ! -z $1 ]; then
 		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
 		sudo sh -c 'echo "dtoverlay=i2c-rtc,pcf2127" >> /boot/config.txt'
 		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
-		sudo systemctl disable fake-hwclock.service
+		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
@@ -618,8 +625,9 @@ if [ ! -z $1 ]; then
 		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
 		sudo sh -c 'echo "dtoverlay=i2c-rtc,pcf8523" >> /boot/config.txt'
 		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
-		sudo systemctl disable fake-hwclock.service
+		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
@@ -644,8 +652,9 @@ if [ ! -z $1 ]; then
 		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
 		sudo sh -c 'echo "dtoverlay=i2c-rtc,pcf8563" >> /boot/config.txt'
 		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo cp -f /lib/udev/hwclock-set.mod /lib/udev/hwclock-set
-		sudo systemctl disable fake-hwclock.service
+		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
+		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
 		sudo systemd daemon-reload
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
@@ -684,6 +693,10 @@ if [ ! -z $1 ]; then
 		    echo "---------------------------------------------------------"
 		fi
 		;;
+	    status)
+		sudo timedatectl status
+		;;
+
 	    disable)
 		# mount /boot rw for saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
@@ -696,7 +709,8 @@ if [ ! -z $1 ]; then
     		sudo sed -i '/i2c*/d' /etc/modules
 		sudo sed -i '/./,/^$/!d' /boot/config.txt
 		sudo sed -i '/./,/^$/!d' /etc/modules
-		sudo cp -f /lib/udev/hwclock-set.org /lib/udev/hwclock-set
+		sudo systemctl disable hwclock-load.service
+		sudo systemctl disable hwclock-save.service
 		sudo systemctl enable fake-hwclock.service
 		sudo systemd daemon-reload
 		# mount /boot ro after saving if not in dev mode
@@ -705,7 +719,7 @@ if [ ! -z $1 ]; then
 		fi
 		;;
 	    *)
-		echo "Syntax: crankshaft rtc abx80x|ds1307|ds1339|mcp7940x|mcp7941x|ds3231|pcf2127|pcf8523|pcf8563|sync|disable"
+		echo "Syntax: crankshaft rtc abx80x|ds1307|ds1339|mcp7940x|mcp7941x|ds3231|pcf2127|pcf8523|pcf8563|sync|status|disable"
 		;;
 	esac
     fi
@@ -732,6 +746,8 @@ if [ ! -z $1 ]; then
 		sudo systemctl disable systemd-rfkill.service >/dev/null 2>&1
 		sudo systemctl disable systemd-rfkill.socket >/dev/null 2>&1
 		sudo systemctl disable systemd-timesyncd.service >/dev/null 2>&1
+		sudo systemctl disable hwclock-load.service >/dev/null 2>&1
+		sudo systemctl disable hwclock-save.service >/dev/null 2>&1
 		sudo systemctl daemon-reload >/dev/null 2>&1
 		;;
 	    status)
@@ -1032,6 +1048,7 @@ else
     echo "  |- pcf8523"
     echo "  |- pcf8563"
     echo "  |- sync                     - Sync timeserver to system time to rtc"
+    echo "  |- status                   - Show current status of clock's"
     echo "  |- disable"
     echo ""
     echo "reset                         Handle Resets"
