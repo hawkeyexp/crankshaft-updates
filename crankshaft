@@ -185,6 +185,11 @@ if [ ! -z $1 ]; then
 			sudo systemctl stop disconnect.timer
 			sudo systemctl stop disconnect.service
 		    elif [ $3 == "start" ]; then
+			sudo systemctl stop disconnect.timer
+			sudo systemctl stop disconnect.service
+			if [ ! -z $DISCONNECTION_SCREEN_POWEROFF_SECS ]; then
+			    sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_SCREEN_POWEROFF_SECS's/' /etc/systemd/system/disconnect.timer
+			fi
 			sudo systemctl start disconnect.timer
 		    else
 			echo "Syntax: crankshaft timers disconnect start|stop"
@@ -200,6 +205,11 @@ if [ ! -z $1 ]; then
 			sudo systemctl stop shutdown.timer
 			sudo systemctl stop shutdown.service
 		    elif [ $3 == "start" ]; then
+			sudo systemctl stop shutdown.timer
+			sudo systemctl stop shutdown.service
+			if [ ! -z $DISCONNECTION_POWEROFF_MINS ]; then
+			    sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_POWEROFF_MINS'm/' /etc/systemd/system/shutdown.timer
+			fi
 			sudo systemctl start shutdown.timer
 		    else
 			echo "Syntax: crankshaft timers shutdown start|stop"
@@ -215,6 +225,16 @@ if [ ! -z $1 ]; then
 		sudo systemctl stop shutdown.service
 		;;
 	    start)
+		sudo systemctl stop disconnect.timer
+		sudo systemctl stop disconnect.service
+		sudo systemctl stop shutdown.timer
+		sudo systemctl stop shutdown.service
+		if [ ! -z $DISCONNECTION_SCREEN_POWEROFF_SECS ]; then
+		    sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_SCREEN_POWEROFF_SECS's/' /etc/systemd/system/disconnect.timer
+		fi
+		if [ ! -z $DISCONNECTION_POWEROFF_MINS ]; then
+		    sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_POWEROFF_MINS'm/' /etc/systemd/system/shutdown.timer
+		fi
 		sudo systemctl start disconnect.timer
 		sudo systemctl start shutdown.timer
 		;;
@@ -1015,3 +1035,4 @@ else
 fi
 
 exit 0
+
