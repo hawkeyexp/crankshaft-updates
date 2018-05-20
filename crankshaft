@@ -9,7 +9,7 @@ CS_BRIGHTNESS_STORE_FILE=/boot/crankshaft/brightness
 # Abort if file does not exist
 
 if [ ! -z $1 ]; then
-    if [ $1 != "display" ] && [ $1 != "brightness" ] && [ $1 != "filesystem" ] && [ $1 != "timers" ] && [ $1 != "settings" ] && [ $1 != "services" ] && [ $1 != "update" ] && [ $1 != "audio" ] && [ $1 != "rtc" ] && [ $1 != "reset" ] && [ $1 != "rpicam" ]; then
+    if [ $1 != "display" ] && [ $1 != "brightness" ] && [ $1 != "filesystem" ] && [ $1 != "timers" ] && [ $1 != "settings" ] && [ $1 != "services" ] && [ $1 != "update" ] && [ $1 != "audio" ] && [ $1 != "rtc" ] && [ $1 != "reset" ] && [ $1 != "rpicam" ] && [ $1 != "version" ]; then
 	echo "Unknown command:"
 	echo "Syntax: crankshaft display|brightness|filesystem|timers|audio|settings|services|rpicam|reset|update"
 	exit 0
@@ -960,6 +960,11 @@ if [ ! -z $1 ]; then
 		;;
 	esac
     fi
+    #version
+    if [ $1 == "version" ]; then
+	echo "Cranshaft Management Tool v0.0.1"
+    fi
+
 else
     echo ""
     echo "crankshaft's known commands:"
@@ -1050,7 +1055,8 @@ else
     echo "update                        Handle Updates"
     echo "     |- udev                  - Check And Update udev Rules For Device Detection"
     echo "     |- csmt                  - Check And Update Crankshaft Management Tool"
+    echo ""
+    echo "version                       Show Vesion Of CSMT"
 fi
 
 exit 0
-
