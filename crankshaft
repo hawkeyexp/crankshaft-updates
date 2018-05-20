@@ -11,7 +11,7 @@ CS_BRIGHTNESS_STORE_FILE=/boot/crankshaft/brightness
 if [ ! -z $1 ]; then
     if [ $1 != "display" ] && [ $1 != "brightness" ] && [ $1 != "filesystem" ] && [ $1 != "timers" ] && [ $1 != "settings" ] && [ $1 != "services" ] && [ $1 != "update" ] && [ $1 != "audio" ] && [ $1 != "rtc" ] && [ $1 != "reset" ] && [ $1 != "rpicam" ] && [ $1 != "version" ]; then
 	echo "Unknown command:"
-	echo "Syntax: crankshaft display|brightness|filesystem|timers|audio|settings|services|rpicam|reset|update"
+	echo "Syntax: crankshaft display|brightness|filesystem|timers|audio|settings|services|rpicam|reset|update|version"
 	exit 0
     fi
     # brightness
@@ -978,7 +978,7 @@ if [ ! -z $1 ]; then
     fi
     #version
     if [ $1 == "version" ]; then
-	echo "Cranshaft Management Tool v0.0.1"
+	echo "Cranshaft Management Tool v0.0.2"
     fi
 
 else
