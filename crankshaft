@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.0.3
+version=0.0.4
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
 source /boot/crankshaft/crankshaft_env.sh
@@ -952,6 +952,7 @@ if [ ! -z $1 ]; then
 		# mount /boot rw for saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,rw /boot
+    		    sudo mount -o remount,rw /
 		fi
 		#setup cam
 		sudo sed -i 's/^# RPI Camera Module.*//' /boot/config.txt
@@ -960,9 +961,11 @@ if [ ! -z $1 ]; then
 		sudo sh -c "echo '' >> /boot/config.txt"
 		sudo sh -c "echo '# RPI Camera Module' >> /boot/config.txt"
 		sudo sh -c 'echo "start_x=1" >> /boot/config.txt'
+                sudo touch /etc/button_camera_visible
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,ro /boot
+    		    sudo mount -o remount,ro /
 		fi
 		echo "Reboot needed to activate!"
 		;;
@@ -970,14 +973,17 @@ if [ ! -z $1 ]; then
 		# mount /boot rw for saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,rw /boot
+    		    sudo mount -o remount,rw /
 		fi
 		#setup cam
 		sudo sed -i 's/^# RPI Camera Module.*//' /boot/config.txt
     		sudo sed -i '/start_x/d' /boot/config.txt
 		sudo sed -i '/./,/^$/!d' /boot/config.txt
+                sudo rm /etc/button_camera_visible
 		# mount /boot ro after saving if not in dev mode
 		if [ ! -f /tmp/dev_mode_enabled ] ; then
     		    sudo mount -o remount,ro /boot
+    		    sudo mount -o remount,ro /
 		fi
 		echo "Reboot needed to activate!"
 		;;
