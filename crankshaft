@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.0.4
+version=0.0.5
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
 source /boot/crankshaft/crankshaft_env.sh
@@ -366,13 +366,13 @@ if [ ! -z $1 ]; then
     if [ $1 == "display" ]; then
 	case $2 in
 	    on)
-		sudo vcgencmd display_power 1
+		sudo vcgencmd display_power 1 >/dev/null 2>&1
 		if [ -f /sys/class/backlight/rpi_backlight/bl_power ]; then
 		    sudo echo 0 > /sys/class/backlight/rpi_backlight/bl_power
 		fi
 		;;
 	    off)
-		sudo vcgencmd display_power 0
+		sudo vcgencmd display_power 0 >/dev/null 2>&1
 		if [ -f /sys/class/backlight/rpi_backlight/bl_power ]; then
 		    sudo echo 1 > /sys/class/backlight/rpi_backlight/bl_power
 		fi
@@ -784,6 +784,10 @@ if [ ! -z $1 ]; then
 		hdmi_group=`cat /boot/config.txt | grep ^hdmi_group= | cut -d= -f2`
 		hdmi_mode=`cat /boot/config.txt | grep ^hdmi_mode= | cut -d= -f2`
 		hdmi_cvt=`cat /boot/config.txt | grep ^hdmi_cvt= | cut -d= -f2`
+		# in many samples hdmi_cvt ist set as 'hdmi_cvt xyz' which is wrong by missing '=' - failsafe
+		if [ -z $hdmi_cvt ]; then
+		    hdmi_cvt=`cat /boot/config.txt | grep '^hdmi_cvt ' | cut -d' ' -f2-`
+		fi
 		hdmi_drive=`cat /boot/config.txt | grep ^hdmi_drive= | cut -d= -f2`
 		hdmi_force_hotplug=`cat /boot/config.txt | grep ^hdmi_force_hotplug= | cut -d= -f2`
 		config_hdmi_boost=`cat /boot/config.txt | grep ^config_hdmi_boost= | cut -d= -f2`
