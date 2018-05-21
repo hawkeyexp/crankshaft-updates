@@ -1,11 +1,13 @@
 #!/bin/bash
 
-version=0.0.5
+version=0.0.6
+
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
 source /boot/crankshaft/crankshaft_env.sh
 
 CS_BRIGHTNESS_STORE_FILE=/boot/crankshaft/brightness
+CS_VOLUME_STORE_FILE=/boot/crankshaft/volume
 
 # Abort if file does not exist
 
@@ -356,8 +358,58 @@ if [ ! -z $1 ]; then
 		    echo "Syntax: crankshaft audio hifiberry dac|dacplus|digi|amp"
 		fi
 		;;
+	    volume)
+		if [ ! -z $3 ]; then
+		    if [ $3 == "set" ] && [ ! -z $4 ]; then
+			amixer -q set Master $4%
+		    elif [ $3 == "set" ] && [ -z $4 ]; then
+			echo "Syntax: crankshaft audio volume set (0-100)"
+		    elif [ $3 == "get" ]; then
+			volume=`amixer get Master | grep % | grep Left |awk '{print $5}'| sed 's/\[//' | sed 's/\]//'`
+			echo $volume
+		    elif [ $3 == "up" ]; then
+			volume_old=`amixer get Master | grep % | grep Left |awk '{print $5}'| sed 's/\[//' | sed 's/\]//'`
+			amixer -q set Master 5%+
+			volume=`amixer get Master | grep % | grep Left |awk '{print $5}'| sed 's/\[//' | sed 's/\]//'`
+			echo "Old volume: $volume_old - New volume: $volume"
+		    elif [ $3 == "down" ]; then
+			volume_old=`amixer get Master | grep % | grep Left |awk '{print $5}'| sed 's/\[//' | sed 's/\]//'`
+			amixer -q set Master 5%-
+			volume=`amixer get Master | grep % | grep Left |awk '{print $5}'| sed 's/\[//' | sed 's/\]//'`
+			echo "Old volume: $volume_old - New volume: $volume"
+		    elif [ $3 == "save" ]; then
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+			    sudo mount -o remount,rw /boot
+			fi
+			volume=`amixer get Master | grep % | grep Left |awk '{print $5}'| sed 's/\[//' | sed 's/\]//' | sed 's/\%//' `
+			sudo sh -c 'echo "'${volume}'" > '$CS_VOLUME_STORE_FILE
+			echo "Volume Level Saved"
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+	    		    sudo mount -o remount,ro /boot
+			fi
+		    elif [ $3 == "restore" ]; then
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+			    sudo mount -o remount,rw /boot
+			fi
+			if [ -f ${CS_VOLUME_STORE_FILE} ]; then
+			    volume=`cat ${CS_VOLUME_STORE_FILE}`
+			    amixer -q set Master $volume%
+			    echo "Volume Restored"
+			else
+			    echo "Volume File Missing - Skipping restore"
+			fi
+			if [ ! -f /tmp/dev_mode_enabled ] ; then
+	    		    sudo mount -o remount,ro /boot
+			fi
+		    else
+    			echo "Syntax: crankshaft audio volume set|get|up|down|save|restore"
+		    fi
+		else
+    		    echo "Syntax: crankshaft audio volume set|get|up|down|save|restore"
+		fi
+		;;
 	    *)
-		echo "Syntax: crankshaft audio rpi|hifiberry"
+		echo "Syntax: crankshaft audio rpi|hifiberry|volume"
 		;;
 	esac
     fi
