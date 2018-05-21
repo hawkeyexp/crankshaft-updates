@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.0.6
+version=0.0.7
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -1122,6 +1122,13 @@ else
     echo "               |- dacplus     - Hifiberry DAC+ Standard / Pro / Plus"
     echo "               |- digi        - Hifiberry DIGI / DIGI+"
     echo "               |- amp         - Hifiberry AMP+ (Not AMP2!)"
+    echo "    |- volume"
+    echo "            |- set x         - Set audio volume to x % (0-199)"
+    echo "            |- get           - Get current audio volume in %"
+    echo "            |- up            - Increase audio volume by 5%"
+    echo "            |- down          - Decrease audio volume by 5%"
+    echo "            |- save          - Save current audio volume"
+    echo "            |- restore       - Restore saved audio volume"
     echo ""
     echo "settings                      Handle Openauto Settings"
     echo "       |- save                - Save Openauto.ini"
