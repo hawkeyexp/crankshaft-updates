@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.1.0
+version=0.1.1
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -8,6 +8,84 @@ source /boot/crankshaft/crankshaft_env.sh
 
 CS_BRIGHTNESS_STORE_FILE=/boot/crankshaft/brightness
 CS_VOLUME_STORE_FILE=/boot/crankshaft/volume
+
+# FS functions default mode - ignored on dev mode
+function cs_bootrw () {
+    if [ ! -f /tmp/dev_mode_enabled ] ; then
+	sudo mount -o remount,rw /boot
+    fi
+}
+function cs_bootro() {
+    if [ ! -f /tmp/dev_mode_enabled ] ; then
+	sudo mount -o remount,ro /boot
+    fi
+}
+function cs_systemrw() {
+    if [ ! -f /tmp/dev_mode_enabled ] ; then
+	sudo mount -o remount,rw /
+    fi
+}
+function cs_systemro() {
+    if [ ! -f /tmp/dev_mode_enabled ] ; then
+	sudo mount -o remount,ro /
+    fi
+}
+
+# Audio functions
+function cs_audio_rpi() {
+    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
+    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
+    sudo sed -i 's/^dtoverlay=audioinjector.*//' /boot/config.txt
+    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
+    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
+    sudo sed -i '/./,/^$/!d' /boot/config.txt
+    sudo sh -c "echo '' >> /boot/config.txt"
+    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
+    sudo sh -c "echo 'dtparam=audio=on' >> /boot/config.txt"
+}
+
+function cs_audio_hifiberry() {
+    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
+    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
+    sudo sed -i 's/^dtoverlay=audioinjector.*//' /boot/config.txt
+    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
+    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
+    sudo sed -i '/./,/^$/!d' /boot/config.txt
+    sudo sh -c "echo '' >> /boot/config.txt"
+    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
+    sudo sh -c "echo 'dtoverlay=hifiberry-'$1 >> /boot/config.txt"
+}
+function cs_audio_audioinjector() {
+    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
+    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
+    sudo sed -i 's/^dtoverlay=audioinjector.*//' /boot/config.txt
+    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
+    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
+    sudo sed -i '/./,/^$/!d' /boot/config.txt
+    sudo sh -c "echo '' >> /boot/config.txt"
+    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
+    sudo sh -c "echo 'dtoverlay=audioinjector-'$1 >> /boot/config.txt"
+}
+
+# RTC functions
+function cs_rtc() {
+    sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
+    sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
+    sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+    sudo sed -i '/i2c*/d' /etc/modules
+    sudo sed -i '/./,/^$/!d' /boot/config.txt
+    sudo sed -i '/./,/^$/!d' /etc/modules
+    sudo sh -c "echo '' >> /boot/config.txt"
+    sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
+    sudo sh -c "echo 'dtoverlay=i2c_arm=on' >> /boot/config.txt"
+    sudo sh -c "echo 'dtoverlay=i2c-rtc,'$1 >> /boot/config.txt"
+    sudo sh -c "echo 'i2c-dev' >> /etc/modules"
+    sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
+    sudo systemctl enable hwclock-load.service >/dev/null 2>&1
+    sudo systemctl enable hwclock-save.service >/dev/null 2>&1
+    sudo systemd daemon-reload
+    sudo dpkg-reconfigure tzdata
+}
 
 # Abort if file does not exist
 
@@ -22,14 +100,10 @@ if [ ! -z $1 ]; then
         case $2 in
 	    save)
 		if [ -f ${BRIGHTNESS_FILE} ]; then
-		    if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			sudo mount -o remount,rw /boot
-		    fi
+		    cs_bootrw
 		    cat ${BRIGHTNESS_FILE} > ${CS_BRIGHTNESS_STORE_FILE}
 		    echo "Brightness Level Saved"
-		    if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			sudo mount -o remount,ro /boot
-		    fi
+		    cs_bootro
 		else
         	    echo "No device brightness file present"
 
@@ -38,10 +112,14 @@ if [ ! -z $1 ]; then
 	    restore)
 		if [ -f ${BRIGHTNESS_FILE} ]; then
 		    if [ -f ${CS_BRIGHTNESS_STORE_FILE} ]; then
+			cs_bootrw
 			sudo cat ${CS_BRIGHTNESS_STORE_FILE} > ${BRIGHTNESS_FILE}
+			cs_bootro
 		    else
+			cs_bootrw
 			echo ${BR_MAX} > ${BRIGHTNESS_FILE}
 			echo "Brightness Level Restored"
+			cs_bootro
 		    fi
 		else
     		    echo "No device brightness file present"
@@ -51,13 +129,9 @@ if [ ! -z $1 ]; then
 		if [ -f ${BRIGHTNESS_FILE} ]; then
 		    LVL=`cat ${BRIGHTNESS_FILE}`
 		    if [ $((${LVL} + ${BR_STEP})) -le ${BR_MAX} ]; then
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,rw /boot
-			fi
+			cs_bootrw
 			echo $((${LVL} + ${BR_STEP})) > ${BRIGHTNESS_FILE}
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,ro /boot
-			fi
+			cs_bootro
 			echo "Brightness Level Increased To: $((${LVL} + ${BR_STEP}))"
 		    fi
 		else
@@ -68,13 +142,9 @@ if [ ! -z $1 ]; then
 		if [ -f ${BRIGHTNESS_FILE} ]; then
 		    LVL=`cat ${BRIGHTNESS_FILE}`
 		    if [ $((${LVL} - ${BR_STEP})) -ge ${BR_MIN} ]; then
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,rw /boot
-			fi
+			cs_bootrw
 			echo $((${LVL} - ${BR_STEP})) > ${BRIGHTNESS_FILE}
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,ro /boot
-			fi
+			cs_bootro
 			echo "Brightness Level Reduced To: $((${LVL} + ${BR_STEP}))"
 		    fi
 		else
@@ -85,27 +155,19 @@ if [ ! -z $1 ]; then
 		if [ ! -z $3 ]; then
 		    if [ $3 == "min" ]; then
 			if [ -f ${BRIGHTNESS_FILE} ]; then
-			    if [ ! -f /tmp/dev_mode_enabled ] ; then
-    				sudo mount -o remount,rw /boot
-			    fi
+			    cs_bootrw
 			    echo ${BR_MIN} > ${BRIGHTNESS_FILE}
 			    sudo cat ${BRIGHTNESS_FILE} > ${CS_BRIGHTNESS_STORE_FILE}
-			    if [ ! -f /tmp/dev_mode_enabled ] ; then
-    				sudo mount -o remount,ro /boot
-			    fi
+			    cs_bootro
 			else
     			    echo "No device brightness file present"
 			fi
 		    elif [ $3 == "max" ]; then
 			if [ -f ${BRIGHTNESS_FILE} ]; then
-			    if [ ! -f /tmp/dev_mode_enabled ] ; then
-    				sudo mount -o remount,rw /boot
-			    fi
+			    cs_bootrw
 			    echo ${BR_MAX} > ${BRIGHTNESS_FILE}
 			    sudo cat ${BRIGHTNESS_FILE} > ${CS_BRIGHTNESS_STORE_FILE}
-			    if [ ! -f /tmp/dev_mode_enabled ] ; then
-    				sudo mount -o remount,ro /boot
-			    fi
+			    cs_bootro
 			else
     			    echo "No device brightness file present"
 			fi
@@ -147,9 +209,9 @@ if [ ! -z $1 ]; then
 	    system)
 		if [ ! -z $3 ]; then
 		    if [ $3 == "unlock" ]; then
-	    		sudo mount -o remount,rw /
+			cs_systemrw
 		    elif [ $3 == "lock" ]; then
-			sudo mount -o remount,ro /
+			cs_systemro
 		    else
 			echo "Syntax: crankshaft filesystem system lock|unlock"
 		    fi
@@ -160,9 +222,9 @@ if [ ! -z $1 ]; then
 	    boot)
 		if [ ! -z $3 ]; then
 		    if [ $3 == "unlock" ]; then
-	    		sudo mount -o remount,rw /boot
+			cs_bootrw
 		    elif [ $3 == "lock" ]; then
-			sudo mount -o remount,ro /boot
+			cs_bootro
 		    else
 			echo "Syntax: crankshaft filesystem boot lock|unlock"
 		    fi
@@ -190,15 +252,11 @@ if [ ! -z $1 ]; then
 		    elif [ $3 == "start" ]; then
 			sudo systemctl stop disconnect.timer
 			sudo systemctl stop disconnect.service
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,rw /
-			fi
+			cs_systemrw
 			if [ ! -z $DISCONNECTION_SCREEN_POWEROFF_SECS ]; then
 			    sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_SCREEN_POWEROFF_SECS's/' /etc/systemd/system/disconnect.timer
 			fi
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,ro /
-			fi
+			cs_systemro
 			sudo systemctl start disconnect.timer
 		    else
 			echo "Syntax: crankshaft timers disconnect start|stop"
@@ -216,14 +274,10 @@ if [ ! -z $1 ]; then
 		    elif [ $3 == "start" ]; then
 			sudo systemctl stop shutdown.timer
 			sudo systemctl stop shutdown.service
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,rw /
-			fi
 			if [ ! -z $DISCONNECTION_POWEROFF_MINS ]; then
+			    cs_systemrw
 			    sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_POWEROFF_MINS'm/' /etc/systemd/system/shutdown.timer
-			fi
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,ro /
+			    cs_systemrw
 			fi
 			sudo systemctl start shutdown.timer
 		    else
@@ -244,9 +298,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl stop disconnect.service
 		sudo systemctl stop shutdown.timer
 		sudo systemctl stop shutdown.service
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-		    sudo mount -o remount,rw /
-		fi
+		cs_systemrw
 		if [ ! -z $DISCONNECTION_SCREEN_POWEROFF_SECS ]; then
 		    if [ -f /etc/first_start_done ]; then
 			sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_SCREEN_POWEROFF_SECS's/' /etc/systemd/system/disconnect.timer
@@ -258,9 +310,7 @@ if [ ! -z $1 ]; then
 		if [ ! -z $DISCONNECTION_POWEROFF_MINS ]; then
 		    sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_POWEROFF_MINS'm/' /etc/systemd/system/shutdown.timer
 		fi
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-		    sudo mount -o remount,ro /
-		fi
+		cs_systemro
 		sudo systemctl start disconnect.timer
 		sudo systemctl start shutdown.timer
 		;;
@@ -274,91 +324,32 @@ if [ ! -z $1 ]; then
     if [ $1 == "audio" ]; then
 	case $2 in
 	    rpi)
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-		sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
-		sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
-		sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
-		sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
-		sudo sed -i '/./,/^$/!d' /boot/config.txt
-	        sudo sh -c "echo '' >> /boot/config.txt"
-		sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
-		sudo sh -c "echo 'dtparam=audio=on' >> /boot/config.txt"
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootrw
+		cs_audio_rpi
+		cs_bootrw
 		echo "Reboot needed to activate!"
 		;;
 	    hifiberry)
 		if [ ! -z $3 ]; then
 		    if [ $3 == "dac" ]; then
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,rw /boot
-			fi
-			    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
-			    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
-			    sudo sed -i 's/^dtoverlay=audioinjector.*//' /boot/config.txt
-			    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
-			    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
-			    sudo sed -i '/./,/^$/!d' /boot/config.txt
-			    sudo sh -c "echo '' >> /boot/config.txt"
-			    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
-			    sudo sh -c "echo 'dtoverlay=hifiberry-dac' >> /boot/config.txt"
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,ro /boot
-			fi
+			cs_bootrw
+			cs_audio_hifiberry "dac"
+			cs_bootro
 			echo "Reboot needed to activate!"
 		    elif [ $3 == "dacplus" ]; then
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,rw /boot
-			fi
-			    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
-			    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
-			    sudo sed -i 's/^dtoverlay=audioinjector.*//' /boot/config.txt
-			    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
-			    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
-			    sudo sed -i '/./,/^$/!d' /boot/config.txt
-			    sudo sh -c "echo '' >> /boot/config.txt"
-			    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
-			    sudo sh -c "echo 'dtoverlay=hifiberry-dacplus' >> /boot/config.txt"
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,ro /boot
-			fi
+			cs_bootrw
+			cs_audio_hifiberry "dacplus"
+			cs_bootro
 			echo "Reboot needed to activate!"
 		    elif [ $3 == "digi" ]; then
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,rw /boot
-			fi
-			    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
-			    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
-			    sudo sed -i 's/^dtoverlay=audioinjector.*//' /boot/config.txt
-			    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
-			    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
-			    sudo sed -i '/./,/^$/!d' /boot/config.txt
-			    sudo sh -c "echo '' >> /boot/config.txt"
-			    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
-			    sudo sh -c "echo 'dtoverlay=hifiberry-digi' >> /boot/config.txt"
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,ro /boot
-			fi
+			cs_bootrw
+			cs_audio_hifiberry "digi"
+			cs_bootro
 			echo "Reboot needed to activate!"
 		    elif [ $3 == "amp" ]; then
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,rw /boot
-			fi
-			    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
-			    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
-			    sudo sed -i 's/^dtoverlay=audioinjector.*//' /boot/config.txt
-			    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
-			    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
-			    sudo sed -i '/./,/^$/!d' /boot/config.txt
-			    sudo sh -c "echo '' >> /boot/config.txt"
-			    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
-			    sudo sh -c "echo 'dtoverlay=hifiberry-amp' >> /boot/config.txt"
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,ro /boot
-			fi
+			cs_bootrw
+			cs_audio_hifiberry "amp"
+			cs_bootro
 			echo "Reboot needed to activate!"
 		    else
 			echo "Syntax: crankshaft audio hifiberry dac|dacplus|digi|amp"
@@ -370,21 +361,9 @@ if [ ! -z $1 ]; then
 	    audioinjector)
 		if [ ! -z $3 ]; then
 		    if [ $3 == "zero" ]; then
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,rw /boot
-			fi
-			    sudo sed -i 's/^dtparam=audio=.*//' /boot/config.txt
-			    sudo sed -i 's/^dtoverlay=hifiberry.*//' /boot/config.txt
-			    sudo sed -i 's/^dtoverlay=audioinjector.*//' /boot/config.txt
-			    sudo sed -i 's/^# Enable audio (loads snd_bcm2835).*//' /boot/config.txt
-			    sudo sed -i 's/^# Audio Setup.*//' /boot/config.txt
-			    sudo sed -i '/./,/^$/!d' /boot/config.txt
-			    sudo sh -c "echo '' >> /boot/config.txt"
-			    sudo sh -c "echo '# Audio Setup' >> /boot/config.txt"
-			    sudo sh -c "echo 'dtoverlay=audioinjector-wm8731-audio' >> /boot/config.txt"
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-    			    sudo mount -o remount,ro /boot
-			fi
+			cs_bootrw
+			cs_audio_audioinjector "wm8731-audio"
+			cs_bootro
 			echo "Reboot needed to activate!"
 		    else
 			echo "Syntax: crankshaft audio audioinjector zero"
@@ -413,28 +392,18 @@ if [ ! -z $1 ]; then
 			volume=`amixer get Master | grep % | grep Left |awk '{print $5}'| sed 's/\[//' | sed 's/\]//'`
 			echo "Old volume: $volume_old - New volume: $volume"
 		    elif [ $3 == "save" ]; then
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-			    sudo mount -o remount,rw /boot
-			fi
+			cs_bootrw
 			volume=`amixer get Master | grep % | grep Left |awk '{print $5}'| sed 's/\[//' | sed 's/\]//' | sed 's/\%//' `
 			sudo sh -c 'echo "'${volume}'" > '$CS_VOLUME_STORE_FILE
 			echo "Volume Level Saved"
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-	    		    sudo mount -o remount,ro /boot
-			fi
+			cs_bootro
 		    elif [ $3 == "restore" ]; then
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-			    sudo mount -o remount,rw /boot
-			fi
 			if [ -f ${CS_VOLUME_STORE_FILE} ]; then
 			    volume=`cat ${CS_VOLUME_STORE_FILE}`
 			    amixer -q set Master $volume%
 			    echo "Volume Restored"
 			else
 			    echo "Volume File Missing - Skipping restore"
-			fi
-			if [ ! -f /tmp/dev_mode_enabled ] ; then
-	    		    sudo mount -o remount,ro /boot
 			fi
 		    else
     			echo "Syntax: crankshaft audio volume set|get|up|down|save|restore"
@@ -464,8 +433,33 @@ if [ ! -z $1 ]; then
 		    sudo echo 1 > /sys/class/backlight/rpi_backlight/bl_power
 		fi
 		;;
+	    setup)
+		if [ ! -z $3 ]; then
+		    if [ $DISPLAY_AUTO_SET -eq 1 ]; then
+			# Waveshare Inc. 7inch HDMI LCD(B) Rev2.1
+			if [ $3 == "ws7_hdmi_b_r21" ]; then
+			    cs_bootrw
+			    sudo sed -i 's/^# Custom display settings.*//' /boot/config.txt
+    			    sudo sed -i '/hdmi_group=/d' /boot/config.txt
+    			    sudo sed -i '/hdmi_mode=/d' /boot/config.txt
+    			    sudo sed -i '/hdmi_cvt=/d' /boot/config.txt
+    			    sudo sed -i '/hdmi_drive=/d' /boot/config.txt
+    			    sudo sed -i '/hdmi_force_hotplug=/d' /boot/config.txt
+			    sudo sed -i '/./,/^$/!d' /boot/config.txt
+			    sudo sh -c "echo '' >> /boot/config.txt"
+			    sudo sh -c "echo '# Custom display settings' >> /boot/config.txt"
+			    sudo sh -c "echo 'hdmi_group=2' >> /boot/config.txt"
+			    sudo sh -c "echo 'hdmi_mode=87' >> /boot/config.txt"
+			    sudo sh -c "echo 'hdmi_cvt=800 480 60 6 0 0 0' >> /boot/config.txt"
+			    sudo sh -c "echo 'hdmi_drive=1' >> /boot/config.txt"
+			    sudo sh -c "echo 'hdmi_force_hotplug=1' >> /boot/config.txt"
+			    cs_bootro
+			fi
+		    fi
+		fi
+		;;
 	    *)
-		echo "Syntax: crankshaft display on|off"
+		echo "Syntax: crankshaft display on|off|autosetup"
 		;;
 	esac
     fi
@@ -474,16 +468,10 @@ if [ ! -z $1 ]; then
     if [ $1 == "settings" ]; then
 	case $2 in
 	    save)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
+		cs_bootrw
 		# Copy settings file
 		sudo cp -f /tmp/openauto.ini /boot/crankshaft/openauto.ini
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootrw
 		;;
 	    restore)
 		if [ -f /boot/crankshaft/openauto.ini ]; then
@@ -508,255 +496,75 @@ if [ ! -z $1 ]; then
     if [ $1 == "rtc" ]; then
 	case $2 in
 	    abx80x)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-		#setup clock
-		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
-    		sudo sed -i '/i2c*/d' /etc/modules
-		sudo sed -i '/./,/^$/!d' /boot/config.txt
-		sudo sed -i '/./,/^$/!d' /etc/modules
-		sudo sh -c "echo '' >> /boot/config.txt"
-		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
-		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
-		sudo sh -c 'echo "dtoverlay=i2c-rtc,abx80x" >> /boot/config.txt'
-		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
-		sudo systemd daemon-reload
-                sudo dpkg-reconfigure tzdata
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootrw
+		cs_systemrw
+		cs_rtc "abx80x"
+		cs_systemro
+		cs_bootro
 		echo "Reboot needed to activate!"
 		;;
 	    ds1307)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-		#setup clock
-		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
-    		sudo sed -i '/i2c*/d' /etc/modules
-		sudo sed -i '/./,/^$/!d' /boot/config.txt
-		sudo sed -i '/./,/^$/!d' /etc/modules
-		sudo sh -c "echo '' >> /boot/config.txt"
-		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
-		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
-		sudo sh -c 'echo "dtoverlay=i2c-rtc,ds1307" >> /boot/config.txt'
-		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
-		sudo systemd daemon-reload
-                sudo dpkg-reconfigure tzdata
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootrw
+		cs_systemrw
+		cs_rtc "ds1307"
+		cs_systemro
+		cs_bootro
 		echo "Reboot needed to activate!"
 		;;
 	    ds1339)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-		#setup clock
-		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
-    		sudo sed -i '/i2c*/d' /etc/modules
-		sudo sed -i '/./,/^$/!d' /boot/config.txt
-		sudo sed -i '/./,/^$/!d' /etc/modules
-		sudo sh -c "echo '' >> /boot/config.txt"
-		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
-		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
-		sudo sh -c 'echo "dtoverlay=i2c-rtc,ds1339" >> /boot/config.txt'
-		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
-		sudo systemd daemon-reload
-                sudo dpkg-reconfigure tzdata
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootrw
+		cs_systemrw
+		cs_rtc "ds1339"
+		cs_systemro
+		cs_bootro
 		echo "Reboot needed to activate!"
 		;;
 	    mcp7940x)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-		#setup clock
-		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
-    		sudo sed -i '/i2c*/d' /etc/modules
-		sudo sed -i '/./,/^$/!d' /boot/config.txt
-		sudo sed -i '/./,/^$/!d' /etc/modules
-		sudo sh -c "echo '' >> /boot/config.txt"
-		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
-		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
-		sudo sh -c 'echo "dtoverlay=i2c-rtc,mcp7940x" >> /boot/config.txt'
-		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
-		sudo systemd daemon-reload
-                sudo dpkg-reconfigure tzdata
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootrw
+		cs_systemrw
+		cs_rtc "mcp7940x"
+		cs_systemro
+		cs_bootro
 		echo "Reboot needed to activate!"
 		;;
 	    mcp7941x)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-		#setup clock
-		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
-    		sudo sed -i '/i2c*/d' /etc/modules
-		sudo sed -i '/./,/^$/!d' /boot/config.txt
-		sudo sed -i '/./,/^$/!d' /etc/modules
-		sudo sh -c "echo '' >> /boot/config.txt"
-		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
-		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
-		sudo sh -c 'echo "dtoverlay=i2c-rtc,mcp7941x" >> /boot/config.txt'
-		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
-		sudo systemd daemon-reload
-                sudo dpkg-reconfigure tzdata
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootrw
+		cs_systemrw
+		cs_rtc "mcp7941x"
+		cs_systemro
+		cs_bootro
 		echo "Reboot needed to activate!"
 		;;
 	    ds3231)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-		#setup clock
-		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
-    		sudo sed -i '/i2c*/d' /etc/modules
-		sudo sed -i '/./,/^$/!d' /boot/config.txt
-		sudo sed -i '/./,/^$/!d' /etc/modules
-		sudo sh -c "echo '' >> /boot/config.txt"
-		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
-		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
-		sudo sh -c 'echo "dtoverlay=i2c-rtc,ds3231" >> /boot/config.txt'
-		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
-		sudo systemd daemon-reload
-                sudo dpkg-reconfigure tzdata
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootrw
+		cs_systemrw
+		cs_rtc "ds3231"
+		cs_systemro
+		cs_bootro
 		echo "Reboot needed to activate!"
 		;;
 	    pcf2127)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-		#setup clock
-		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
-    		sudo sed -i '/i2c*/d' /etc/modules
-		sudo sed -i '/./,/^$/!d' /boot/config.txt
-		sudo sed -i '/./,/^$/!d' /etc/modules
-		sudo sh -c "echo '' >> /boot/config.txt"
-		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
-		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
-		sudo sh -c 'echo "dtoverlay=i2c-rtc,pcf2127" >> /boot/config.txt'
-		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
-		sudo systemd daemon-reload
-                sudo dpkg-reconfigure tzdata
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootrw
+		cs_systemrw
+		cs_rtc "pcf2127"
+		cs_systemro
+		cs_bootro
 		echo "Reboot needed to activate!"
 		;;
 	    pcf8523)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-		#setup clock
-		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
-    		sudo sed -i '/i2c*/d' /etc/modules
-		sudo sed -i '/./,/^$/!d' /boot/config.txt
-		sudo sed -i '/./,/^$/!d' /etc/modules
-		sudo sh -c "echo '' >> /boot/config.txt"
-		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
-		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
-		sudo sh -c 'echo "dtoverlay=i2c-rtc,pcf8523" >> /boot/config.txt'
-		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
-		sudo systemd daemon-reload
-                sudo dpkg-reconfigure tzdata
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootrw
+		cs_systemrw
+		cs_rtc "pcf8523"
+		cs_systemro
+		cs_bootro
 		echo "Reboot needed to activate!"
 		;;
 	    pcf8563)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-		#setup clock
-		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
-    		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
-    		sudo sed -i '/i2c*/d' /etc/modules
-		sudo sed -i '/./,/^$/!d' /boot/config.txt
-		sudo sed -i '/./,/^$/!d' /etc/modules
-		sudo sh -c "echo '' >> /boot/config.txt"
-		sudo sh -c "echo '# RTC Setup' >> /boot/config.txt"
-		sudo sh -c 'echo "dtoverlay=i2c_arm=on" >> /boot/config.txt'
-		sudo sh -c 'echo "dtoverlay=i2c-rtc,pcf8563" >> /boot/config.txt'
-		sudo sh -c "echo 'i2c-dev' >> /etc/modules"
-		sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-load.service >/dev/null 2>&1
-		sudo systemctl enable hwclock-save.service >/dev/null 2>&1
-		sudo systemd daemon-reload
-                sudo dpkg-reconfigure tzdata
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootrw
+		cs_systemrw
+		cs_rtc "pcf8563"
+		cs_systemro
+		cs_bootro
 		echo "Reboot needed to activate!"
 		;;
 	    sync)
@@ -795,11 +603,9 @@ if [ ! -z $1 ]; then
 		;;
 
 	    disable)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-		#setup clock
+		cs_bootrw
+		cs_systemrw
+		#delete clock
 		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
     		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
     		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
@@ -810,10 +616,8 @@ if [ ! -z $1 ]; then
 		sudo systemctl disable hwclock-save.service
 		sudo systemctl enable fake-hwclock.service
 		sudo systemd daemon-reload
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_systemro
+		cs_bootro
 		;;
 	    *)
 		echo "Syntax: crankshaft rtc abx80x|ds1307|ds1339|mcp7940x|mcp7941x|ds3231|pcf2127|pcf8523|pcf8563|sync|status|disable"
@@ -845,6 +649,8 @@ if [ ! -z $1 ]; then
 		sudo systemctl disable systemd-timesyncd.service >/dev/null 2>&1
 		sudo systemctl disable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl disable hwclock-save.service >/dev/null 2>&1
+		sudo systemctl enable daymode.timer >/dev/null 2>&1
+		sudo systemctl enable nightmode.timer >/dev/null 2>&1
 		sudo systemctl daemon-reload >/dev/null 2>&1
 		;;
 	    status)
@@ -860,12 +666,7 @@ if [ ! -z $1 ]; then
     if [ $1 == "reset" ]; then
 	case $2 in
 	    config.txt)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-		fi
-
-		# get custom display and power params
+		cs_bootrw
 
 		# display
 		hdmi_group=`cat /boot/config.txt | grep ^hdmi_group= | cut -d= -f2`
@@ -945,9 +746,7 @@ if [ ! -z $1 ]; then
 		sudo sh -c "echo 'gpu_mem=256' >> /boot/config.txt"
 
 		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-		fi
+		cs_bootro
 		echo "    Reboot needed to activate!"
 		echo " --- Check config.txt before! ---"
 		;;
@@ -1040,11 +839,8 @@ if [ ! -z $1 ]; then
     if [ $1 == "rpicam" ]; then
 	case $2 in
 	    enable)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-    		    sudo mount -o remount,rw /
-		fi
+		cs_bootrw
+		cs_systemrw
 		#setup cam
 		sudo sed -i 's/^# RPI Camera Module.*//' /boot/config.txt
     		sudo sed -i '/start_x/d' /boot/config.txt
@@ -1053,29 +849,20 @@ if [ ! -z $1 ]; then
 		sudo sh -c "echo '# RPI Camera Module' >> /boot/config.txt"
 		sudo sh -c 'echo "start_x=1" >> /boot/config.txt'
                 sudo touch /etc/button_camera_visible
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-    		    sudo mount -o remount,ro /
-		fi
+		cs_bootro
+		cs_systemro
 		echo "Reboot needed to activate!"
 		;;
 	    disable)
-		# mount /boot rw for saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,rw /boot
-    		    sudo mount -o remount,rw /
-		fi
-		#setup cam
+		cs_bootrw
+		cs_systemrw
+		#remove cam
 		sudo sed -i 's/^# RPI Camera Module.*//' /boot/config.txt
     		sudo sed -i '/start_x/d' /boot/config.txt
 		sudo sed -i '/./,/^$/!d' /boot/config.txt
                 sudo rm /etc/button_camera_visible
-		# mount /boot ro after saving if not in dev mode
-		if [ ! -f /tmp/dev_mode_enabled ] ; then
-    		    sudo mount -o remount,ro /boot
-    		    sudo mount -o remount,ro /
-		fi
+		cs_bootro
+		cs_systemro
 		echo "Reboot needed to activate!"
 		;;
 	    *)
@@ -1086,9 +873,7 @@ if [ ! -z $1 ]; then
 
     #resize prtition and fs
     if [ $1 == "resize" ]; then
-	if [ ! -f /tmp/dev_mode_enabled ] ; then
-    	    sudo mount -o remount,rw /
-	fi
+	cs_systemrw
 	echo "Current partition size:"
 	sudo parted /dev/mmcblk0p2 print | tail -n2 | head -n1 | awk {'print $4'}
 	echo ""
@@ -1103,6 +888,7 @@ if [ ! -z $1 ]; then
 	sudo resize2fs /dev/mmcblk0p2
 	echo ""
 	echo "Done!"
+	cs_systemro
     fi
 
     #version
@@ -1118,6 +904,8 @@ else
     echo "display                       Handle Display"
     echo "      |- on                   - Enable Display"
     echo "      |- off                  - Disable Display"
+    echo "      |- autosetup            - Try to detect display by usb touch controller and setup"
+    echo "                 |- force     - Ignore the done flag"
     echo ""
     echo "brightness                    Handle Display Backlight"
     echo "         |- up                - Increase Brightness"
