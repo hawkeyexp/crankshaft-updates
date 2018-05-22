@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.0.9
+version=0.1.0
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -1107,7 +1107,7 @@ if [ ! -z $1 ]; then
 
     #version
     if [ $1 == "version" ]; then
-	echo "Cranshaft Management Tool v$version"
+	echo "Crankshaft Management Tool v$version"
     fi
 
 else
@@ -1173,7 +1173,7 @@ else
     echo ""
     echo "services                      Handle Systemd Services"
     echo "       |- reset               - Re-Init Default Boot State Of Services"
-    echo "       |- status              - List State Of Cranshaft Services"
+    echo "       |- status              - List State Of Crankshaft Services"
     echo ""
     echo "rtc                           Handle Real Time Clock"
     echo "  |- abx80x"
