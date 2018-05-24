@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.1.5
+version=0.1.6
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -80,6 +80,7 @@ function cs_rtc() {
     sudo sh -c "echo 'dtoverlay=i2c_arm=on' >> /boot/config.txt"
     sudo sh -c "echo 'dtoverlay=i2c-rtc,'$1 >> /boot/config.txt"
     sudo sh -c "echo 'i2c-dev' >> /etc/modules"
+    sudo sed -i 's/^RTC_DAYNIGHT=.*/RTC_DAYNIGHT=1/' /boot/crankshaft/crankshaft_env.sh
     sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
     sudo systemctl enable hwclock-load.service >/dev/null 2>&1
     sudo systemctl enable hwclock-save.service >/dev/null 2>&1
@@ -87,7 +88,7 @@ function cs_rtc() {
     sudo dpkg-reconfigure tzdata
 }
 
-# RTC functions
+# Display functions
 function cs_clean_display_entry() {
     sudo sed -i 's/^# Custom display settings.*//' /boot/config.txt
     sudo sed -i '/hdmi_group=/d' /boot/config.txt
@@ -300,17 +301,17 @@ if [ ! -z $1 ]; then
 	    disconnect)
 		if [ ! -z $3 ]; then
 		    if [ $3 == "stop" ]; then
-			sudo systemctl stop disconnect.timer
-			sudo systemctl stop disconnect.service
+			sudo systemctl stop disconnect.timer >/dev/null 2>&1
+			sudo systemctl stop disconnect.service >/dev/null 2>&1
 		    elif [ $3 == "start" ]; then
-			sudo systemctl stop disconnect.timer
-			sudo systemctl stop disconnect.service
+			sudo systemctl stop disconnect.timer >/dev/null 2>&1
+			sudo systemctl stop disconnect.service >/dev/null 2>&1
 			cs_systemrw
 			if [ ! -z $DISCONNECTION_SCREEN_POWEROFF_SECS ]; then
 			    sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_SCREEN_POWEROFF_SECS's/' /etc/systemd/system/disconnect.timer
 			fi
 			cs_systemro
-			sudo systemctl start disconnect.timer
+			sudo systemctl start disconnect.timer >/dev/null 2>&1
 		    else
 			cs_echo "${YELLOW}${BOLD}Syntax: crankshaft timers disconnect start|stop${RESET}"
 		    fi
@@ -322,17 +323,17 @@ if [ ! -z $1 ]; then
 	    shutdown)
 		if [ ! -z $3 ]; then
 		    if [ $3 == "stop" ]; then
-			sudo systemctl stop shutdown.timer
-			sudo systemctl stop shutdown.service
+			sudo systemctl stop shutdown.timer >/dev/null 2>&1
+			sudo systemctl stop shutdown.service >/dev/null 2>&1
 		    elif [ $3 == "start" ]; then
-			sudo systemctl stop shutdown.timer
-			sudo systemctl stop shutdown.service
+			sudo systemctl stop shutdown.timer >/dev/null 2>&1
+			sudo systemctl stop shutdown.service >/dev/null 2>&1
 			if [ ! -z $DISCONNECTION_POWEROFF_MINS ]; then
 			    cs_systemrw
 			    sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_POWEROFF_MINS'm/' /etc/systemd/system/shutdown.timer
 			    cs_systemrw
 			fi
-			sudo systemctl start shutdown.timer
+			sudo systemctl start shutdown.timer >/dev/null 2>&1
 		    else
 			cs_echo "${YELLOW}${BOLD}Syntax: crankshaft timers shutdown start|stop${RESET}"
 		    fi
@@ -341,16 +342,16 @@ if [ ! -z $1 ]; then
 		fi
 		;;
 	    stop)
-		sudo systemctl stop disconnect.timer
-		sudo systemctl stop disconnect.service
-		sudo systemctl stop shutdown.timer
-		sudo systemctl stop shutdown.service
+		sudo systemctl stop disconnect.timer >/dev/null 2>&1
+		sudo systemctl stop disconnect.service >/dev/null 2>&1
+		sudo systemctl stop shutdown.timer >/dev/null 2>&1
+		sudo systemctl stop shutdown.service >/dev/null 2>&1
 		;;
 	    start)
-		sudo systemctl stop disconnect.timer
-		sudo systemctl stop disconnect.service
-		sudo systemctl stop shutdown.timer
-		sudo systemctl stop shutdown.service
+		sudo systemctl stop disconnect.timer >/dev/null 2>&1
+		sudo systemctl stop disconnect.service >/dev/null 2>&1
+		sudo systemctl stop shutdown.timer >/dev/null 2>&1
+		sudo systemctl stop shutdown.service >/dev/null 2>&1
 		cs_systemrw
 		if [ ! -z $DISCONNECTION_SCREEN_POWEROFF_SECS ]; then
 		    if [ -f /etc/first_start_done ]; then
@@ -364,8 +365,8 @@ if [ ! -z $1 ]; then
 		    sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_POWEROFF_MINS'm/' /etc/systemd/system/shutdown.timer
 		fi
 		cs_systemro
-		sudo systemctl start disconnect.timer
-		sudo systemctl start shutdown.timer
+		sudo systemctl start disconnect.timer >/dev/null 2>&1
+		sudo systemctl start shutdown.timer >/dev/null 2>&1
 		;;
 	    *)
 		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft timers status|shutdown|disconnect|start|stop${RESET}"
@@ -664,12 +665,14 @@ if [ ! -z $1 ]; then
 		sudo sed -i 's/^# RTC Setup.*//' /boot/config.txt
     		sudo sed -i '/dtoverlay=i2c-rtc/d' /boot/config.txt
     		sudo sed -i '/dtoverlay=i2c_arm=/d' /boot/config.txt
+		sudo sed -i 's/^RTC_DAYNIGHT=.*/RTC_DAYNIGHT=0/' /boot/crankshaft/crankshaft_env.sh
     		sudo sed -i '/i2c*/d' /etc/modules
 		sudo sed -i '/./,/^$/!d' /boot/config.txt
 		sudo sed -i '/./,/^$/!d' /etc/modules
-		sudo systemctl disable hwclock-load.service
-		sudo systemctl disable hwclock-save.service
-		sudo systemctl enable fake-hwclock.service
+		sudo sed -i '/./,/^$/!d' /boot/crankshaft/crankshaft_env.sh
+		sudo systemctl disable hwclock-load.service >/dev/null 2>&1
+		sudo systemctl disable hwclock-save.service >/dev/null 2>&1
+		sudo systemctl enable fake-hwclock.service >/dev/null 2>&1
 		sudo systemd daemon-reload
 		cs_systemro
 		cs_bootro
