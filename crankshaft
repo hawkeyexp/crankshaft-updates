@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.1.4
+version=0.1.5
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -704,6 +704,9 @@ if [ ! -z $1 ]; then
 		sudo systemctl disable systemd-timesyncd.service >/dev/null 2>&1
 		sudo systemctl disable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl disable hwclock-save.service >/dev/null 2>&1
+		sudo systemctl disable bluetooth.service >/dev/null 2>&1
+		sudo systemctl disable hciuart.service >/dev/null 2>&1
+		sudo systemctl disable tap2wake.service >/dev/null 2>&1
 		sudo systemctl enable daymode.timer >/dev/null 2>&1
 		sudo systemctl enable nightmode.timer >/dev/null 2>&1
 		sudo systemctl daemon-reload >/dev/null 2>&1
