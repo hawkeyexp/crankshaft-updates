@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.1.2
+version=0.1.3
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -103,9 +103,14 @@ function cs_clean_display_entry() {
 if [ ! -z $1 ]; then
     if [ $1 != "display" ] && [ $1 != "brightness" ] && [ $1 != "filesystem" ] && [ $1 != "timers" ] && [ $1 != "settings" ] && [ $1 != "services" ] && [ $1 != "update" ] && [ $1 != "audio" ] && [ $1 != "rtc" ] && [ $1 != "reset" ] && [ $1 != "rpicam" ] && [ $1 != "resize" ] && [ $1 != "version" ]; then
 	echo "Unknown command:"
-	echo "Syntax: crankshaft display|brightness|filesystem|timers|audio|settings|services|rpicam|reset|resize|update|version"
+	echo "${YELLOW}${BOLD}Syntax: crankshaft display|brightness|filesystem|timers|audio|settings|services|rpicam|reset|resize|update|version${RESET}"
 	exit 0
     fi
+    # clear shell
+    clear
+    echo "${MAGENTA}${BOLD}Crankshaft Management Tool v$version is executing command...${RESET}"
+    echo ""
+
     # brightness
     if [ $1 == "brightness" ]; then
         case $2 in
@@ -183,10 +188,10 @@ if [ ! -z $1 ]; then
     			    echo "No device brightness file present"
 			fi
 		    else
-			echo "Syntax: crankshaft brightness set min|max"
+			echo "${YELLOW}${BOLD}Syntax: crankshaft brightness set min|max${RESET}"
 		    fi
 		else
-		    echo "Syntax: crankshaft brightness set min|max"
+		    echo "${YELLOW}${BOLD}Syntax: crankshaft brightness set min|max${RESET}"
 		fi
 		;;
 	    get)
@@ -202,14 +207,14 @@ if [ ! -z $1 ]; then
     			    echo "No device brightness file present"
 			fi
 		    else
-			echo "Syntax: crankshaft brightness get location|level"
+			echo "${YELLOW}${BOLD}Syntax: crankshaft brightness get location|level${RESET}"
 		    fi
 		else
-		    echo "Syntax: crankshaft brightness get location|level"
+		    echo "${YELLOW}${BOLD}Syntax: crankshaft brightness get location|level${RESET}"
 		fi
 		;;
 	    *)
-		echo "Syntax: crankshaft brightness save|restore|up|down|set|get"
+		echo "${YELLOW}${BOLD}Syntax: crankshaft brightness save|restore|up|down|set|get${RESET}"
 		;;
 	esac
     fi
@@ -224,10 +229,10 @@ if [ ! -z $1 ]; then
 		    elif [ $3 == "lock" ]; then
 			cs_systemro
 		    else
-			echo "Syntax: crankshaft filesystem system lock|unlock"
+			echo "${YELLOW}${BOLD}Syntax: crankshaft filesystem system lock|unlock${RESET}"
 		    fi
 		else
-		    echo "Syntax: crankshaft filesystem system lock|unlock"
+		    echo "${YELLOW}${BOLD}Syntax: crankshaft filesystem system lock|unlock${RESET}"
 		fi
 		;;
 	    boot)
@@ -237,14 +242,14 @@ if [ ! -z $1 ]; then
 		    elif [ $3 == "lock" ]; then
 			cs_bootro
 		    else
-			echo "Syntax: crankshaft filesystem boot lock|unlock"
+			echo "${YELLOW}${BOLD}Syntax: crankshaft filesystem boot lock|unlock${RESET}"
 		    fi
 		else
-		    echo "Syntax: crankshaft filesystem boot lock|unlock"
+		    echo "${YELLOW}${BOLD}Syntax: crankshaft filesystem boot lock|unlock${RESET}"
 		fi
 		;;
 	    *)
-		echo "Syntax: crankshaft filesystem system|boot"
+		echo "${YELLOW}${BOLD}Syntax: crankshaft filesystem system|boot${RESET}"
 		;;
 	esac
     fi
@@ -253,7 +258,33 @@ if [ ! -z $1 ]; then
     if [ $1 == "timers" ]; then
 	case $2 in
 	    status)
-	    	sudo systemctl list-timers --all --no-pager
+		echo "${CYAN}${BOLD}"
+	    	sudo systemctl list-timers --all --no-pager | head -1
+		echo "_____________________________________________________________________________________________________________________${RESET}"
+		echo ""
+		echo "${GREEN}${BOLD}Day mode${RESET}"
+		echo "---------------------------------------------------------------------------------------------------------------------"
+		echo "${YELLOW}"
+    		sudo systemctl list-timers --all --no-pager | grep daymode
+		echo "${RESET}"
+		echo ""
+		echo "${GREEN}${BOLD}Night mode${RESET}"
+		echo "---------------------------------------------------------------------------------------------------------------------"
+		echo "${YELLOW}"
+    		sudo systemctl list-timers --all --no-pager | grep nightmode
+		echo "${RESET}"
+		echo ""
+		echo "${GREEN}${BOLD}Display backlight off/blank while no phone connected${RESET}"
+		echo "---------------------------------------------------------------------------------------------------------------------"
+		echo "${YELLOW}"
+    		sudo systemctl list-timers --all --no-pager | grep disconnect
+		echo "${RESET}"
+		echo ""
+		echo "${GREEN}${BOLD}Shutdown while no phone connected${RESET}"
+		echo "---------------------------------------------------------------------------------------------------------------------"
+		echo "${RED}"
+    		sudo systemctl list-timers --all --no-pager | grep shutdown
+		echo "${RESET}"
 		;;
 	    disconnect)
 		if [ ! -z $3 ]; then
@@ -269,11 +300,12 @@ if [ ! -z $1 ]; then
 			fi
 			cs_systemro
 			sudo systemctl start disconnect.timer
+			echo "Timer disconnect started."
 		    else
-			echo "Syntax: crankshaft timers disconnect start|stop"
+			echo "${YELLOW}${BOLD}Syntax: crankshaft timers disconnect start|stop${RESET}"
 		    fi
 		else
-		    echo "Syntax: crankshaft timers disconnect start|stop"
+		    echo "${YELLOW}${BOLD}Syntax: crankshaft timers disconnect start|stop${RESET}"
 		fi
 		;;
 
@@ -291,11 +323,12 @@ if [ ! -z $1 ]; then
 			    cs_systemrw
 			fi
 			sudo systemctl start shutdown.timer
+			echo "Timer shutdown started."
 		    else
-			echo "Syntax: crankshaft timers shutdown start|stop"
+			echo "${YELLOW}${BOLD}Syntax: crankshaft timers shutdown start|stop${RESET}"
 		    fi
 		else
-		    echo "Syntax: crankshaft timers shutdown start|stop"
+		    echo "${YELLOW}${BOLD}Syntax: crankshaft timers shutdown start|stop${RESET}"
 		fi
 		;;
 	    stop)
@@ -303,6 +336,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl stop disconnect.service
 		sudo systemctl stop shutdown.timer
 		sudo systemctl stop shutdown.service
+		echo "All timers stopped."
 		;;
 	    start)
 		sudo systemctl stop disconnect.timer
@@ -324,9 +358,10 @@ if [ ! -z $1 ]; then
 		cs_systemro
 		sudo systemctl start disconnect.timer
 		sudo systemctl start shutdown.timer
+		echo "All timers started."
 		;;
 	    *)
-		echo "Syntax: crankshaft timers status|shutdown|disconnect|start|stop"
+		echo "${YELLOW}${BOLD}Syntax: crankshaft timers status|shutdown|disconnect|start|stop${RESET}"
 		;;
 	esac
     fi
@@ -338,7 +373,7 @@ if [ ! -z $1 ]; then
 		cs_bootrw
 		cs_audio_rpi
 		cs_bootrw
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		;;
 	    hifiberry)
 		if [ ! -z $3 ]; then
@@ -346,27 +381,27 @@ if [ ! -z $1 ]; then
 			cs_bootrw
 			cs_audio_hifiberry "dac"
 			cs_bootro
-			echo "Reboot needed to activate!"
+			echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		    elif [ $3 == "dacplus" ]; then
 			cs_bootrw
 			cs_audio_hifiberry "dacplus"
 			cs_bootro
-			echo "Reboot needed to activate!"
+			echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		    elif [ $3 == "digi" ]; then
 			cs_bootrw
 			cs_audio_hifiberry "digi"
 			cs_bootro
-			echo "Reboot needed to activate!"
+			echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		    elif [ $3 == "amp" ]; then
 			cs_bootrw
 			cs_audio_hifiberry "amp"
 			cs_bootro
-			echo "Reboot needed to activate!"
+			echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		    else
-			echo "Syntax: crankshaft audio hifiberry dac|dacplus|digi|amp"
+			echo "${YELLOW}${BOLD}Syntax: crankshaft audio hifiberry dac|dacplus|digi|amp${RESET}"
 		    fi
 		else
-		    echo "Syntax: crankshaft audio hifiberry dac|dacplus|digi|amp"
+		    echo "${YELLOW}${BOLD}Syntax: crankshaft audio hifiberry dac|dacplus|digi|amp${RESET}"
 		fi
 		;;
 	    audioinjector)
@@ -375,12 +410,12 @@ if [ ! -z $1 ]; then
 			cs_bootrw
 			cs_audio_audioinjector "wm8731-audio"
 			cs_bootro
-			echo "Reboot needed to activate!"
+			echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		    else
-			echo "Syntax: crankshaft audio audioinjector zero"
+			echo "${YELLOW}${BOLD}Syntax: crankshaft audio audioinjector zero${RESET}"
 		    fi
 		else
-		    echo "Syntax: crankshaft audio audioinjector zero"
+		    echo "${YELLOW}${BOLD}Syntax: crankshaft audio audioinjector zero${RESET}"
 		fi
 		;;
 	    volume)
@@ -388,7 +423,7 @@ if [ ! -z $1 ]; then
 		    if [ $3 == "set" ] && [ ! -z $4 ]; then
 			amixer -q set Master $4%
 		    elif [ $3 == "set" ] && [ -z $4 ]; then
-			echo "Syntax: crankshaft audio volume set (0-100)"
+			echo "${YELLOW}${BOLD}Syntax: crankshaft audio volume set (0-100)${RESET}"
 		    elif [ $3 == "get" ]; then
 			volume=`amixer get Master | grep % | grep Left |awk '{print $5}'| sed 's/\[//' | sed 's/\]//'`
 			echo $volume
@@ -417,14 +452,14 @@ if [ ! -z $1 ]; then
 			    echo "Volume File Missing - Skipping restore"
 			fi
 		    else
-    			echo "Syntax: crankshaft audio volume set|get|up|down|save|restore"
+    			echo "${YELLOW}${BOLD}Syntax: crankshaft audio volume set|get|up|down|save|restore${RESET}"
 		    fi
 		else
-    		    echo "Syntax: crankshaft audio volume set|get|up|down|save|restore"
+    		    echo "${YELLOW}${BOLD}Syntax: crankshaft audio volume set|get|up|down|save|restore${RESET}"
 		fi
 		;;
 	    *)
-		echo "Syntax: crankshaft audio rpi|hifiberry|volume"
+		echo "${YELLOW}${BOLD}Syntax: crankshaft audio rpi|hifiberry|volume${RESET}"
 		;;
 	esac
     fi
@@ -472,7 +507,7 @@ if [ ! -z $1 ]; then
 		fi
 		;;
 	    *)
-		echo "Syntax: crankshaft display on|off|autosetup"
+		echo "${YELLOW}${BOLD}Syntax: crankshaft display on|off|autodetect${RESET}"
 		;;
 	esac
     fi
@@ -485,6 +520,7 @@ if [ ! -z $1 ]; then
 		# Copy settings file
 		sudo cp -f /tmp/openauto.ini /boot/crankshaft/openauto.ini
 		cs_bootrw
+		echo "openauto.ini saved."
 		;;
 	    restore)
 		if [ -f /boot/crankshaft/openauto.ini ]; then
@@ -498,9 +534,10 @@ if [ ! -z $1 ]; then
 		fi
 		sudo chown pi:pi /tmp/openauto.ini
 		sudo chmod 777 /tmp/openauto.ini
+		echo "openauto.ini restored."
 		;;
 	    *)
-		echo "Syntax: crankshaft settings save|restore"
+		echo "${YELLOW}${BOLD}Syntax: crankshaft settings save|restore${RESET}"
 		;;
 	esac
     fi
@@ -514,7 +551,7 @@ if [ ! -z $1 ]; then
 		cs_rtc "abx80x"
 		cs_systemro
 		cs_bootro
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		;;
 	    ds1307)
 		cs_bootrw
@@ -522,7 +559,7 @@ if [ ! -z $1 ]; then
 		cs_rtc "ds1307"
 		cs_systemro
 		cs_bootro
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		;;
 	    ds1339)
 		cs_bootrw
@@ -530,7 +567,7 @@ if [ ! -z $1 ]; then
 		cs_rtc "ds1339"
 		cs_systemro
 		cs_bootro
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		;;
 	    mcp7940x)
 		cs_bootrw
@@ -538,7 +575,7 @@ if [ ! -z $1 ]; then
 		cs_rtc "mcp7940x"
 		cs_systemro
 		cs_bootro
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		;;
 	    mcp7941x)
 		cs_bootrw
@@ -546,7 +583,7 @@ if [ ! -z $1 ]; then
 		cs_rtc "mcp7941x"
 		cs_systemro
 		cs_bootro
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		;;
 	    ds3231)
 		cs_bootrw
@@ -554,7 +591,7 @@ if [ ! -z $1 ]; then
 		cs_rtc "ds3231"
 		cs_systemro
 		cs_bootro
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		;;
 	    pcf2127)
 		cs_bootrw
@@ -562,7 +599,7 @@ if [ ! -z $1 ]; then
 		cs_rtc "pcf2127"
 		cs_systemro
 		cs_bootro
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		;;
 	    pcf8523)
 		cs_bootrw
@@ -570,7 +607,7 @@ if [ ! -z $1 ]; then
 		cs_rtc "pcf8523"
 		cs_systemro
 		cs_bootro
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		;;
 	    pcf8563)
 		cs_bootrw
@@ -578,7 +615,7 @@ if [ ! -z $1 ]; then
 		cs_rtc "pcf8563"
 		cs_systemro
 		cs_bootro
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		;;
 	    sync)
 		# sync rtc time with sys
@@ -633,7 +670,7 @@ if [ ! -z $1 ]; then
 		cs_bootro
 		;;
 	    *)
-		echo "Syntax: crankshaft rtc abx80x|ds1307|ds1339|mcp7940x|mcp7941x|ds3231|pcf2127|pcf8523|pcf8563|sync|status|disable"
+		echo "${YELLOW}${BOLD}Syntax: crankshaft rtc abx80x|ds1307|ds1339|mcp7940x|mcp7941x|ds3231|pcf2127|pcf8523|pcf8563|sync|status|disable${RESET}"
 		;;
 	esac
     fi
@@ -670,7 +707,7 @@ if [ ! -z $1 ]; then
 		systemctl list-units --type=service --state=active | grep 'Crankshaft\|UNIT'
 		;;
 	    *)
-		echo "Syntax: crankshaft services status|reset"
+		echo "${YELLOW}${BOLD}Syntax: crankshaft services status|reset${RESET}"
 		;;
 	esac
     fi
@@ -760,11 +797,11 @@ if [ ! -z $1 ]; then
 
 		# mount /boot ro after saving if not in dev mode
 		cs_bootro
-		echo "    Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		echo " --- Check config.txt before! ---"
 		;;
 	    *)
-		echo "Syntax: crankshaft reset config.txt"
+		echo "${YELLOW}${BOLD}Syntax: crankshaft reset config.txt${RESET}"
 		;;
 	esac
     fi
@@ -843,7 +880,7 @@ if [ ! -z $1 ]; then
 		fi
 		;;
 	    *)
-		echo "Syntax: crankshaft update udev|csmt"
+		echo "${YELLOW}${BOLD}Syntax: crankshaft update udev|csmt${RESET}"
 		;;
 	esac
     fi
@@ -864,7 +901,7 @@ if [ ! -z $1 ]; then
                 sudo touch /etc/button_camera_visible
 		cs_bootro
 		cs_systemro
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
 		;;
 	    disable)
 		cs_bootrw
@@ -876,10 +913,16 @@ if [ ! -z $1 ]; then
                 sudo rm /etc/button_camera_visible
 		cs_bootro
 		cs_systemro
-		echo "Reboot needed to activate!"
+		echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
+		;;
+	    view)
+		sudo systemctl restart rpicam
+		;;
+	    hide)
+		sudo systemctl stop rpicam
 		;;
 	    *)
-		echo "Syntax: crankshaft rpicam enable|disable"
+		echo "${YELLOW}${BOLD}Syntax: crankshaft rpicam enable|disable${RESET}"
 		;;
 	esac
     fi
@@ -908,7 +951,8 @@ if [ ! -z $1 ]; then
     if [ $1 == "version" ]; then
 	echo "Crankshaft Management Tool v$version"
     fi
-
+    echo ""
+    echo "Done."
 else
     echo ""
     echo "crankshaft's known commands:"
@@ -917,7 +961,7 @@ else
     echo "display                       Handle Display"
     echo "      |- on                   - Enable Display"
     echo "      |- off                  - Disable Display"
-    echo "      |- autosetup            - Try to detect display by usb touch controller and setup"
+    echo "      |- autodetect           - Try to detect display by usb touch controller and setup config.txt"
     echo ""
     echo "brightness                    Handle Display Backlight"
     echo "         |- up                - Increase Brightness"
@@ -1006,6 +1050,8 @@ else
     echo "rpicam                        Handle Updates"
     echo "     |- enable                - Enable rpi camera module"
     echo "     |- disable               - Disable rpi camera module"
+    echo "     |- view                  - Enable rpi camera module"
+    echo "     |- hide                  - Disable rpi camera module"
     echo ""
     echo "resize                        Resize root partition and filesystem on sdcard"
     echo ""
