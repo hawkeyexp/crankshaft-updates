@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.1.6
+version=0.1.9
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -110,7 +110,7 @@ function cs_echo() {
 # Abort if file does not exist
 
 if [ ! -z $1 ]; then
-    if [ $1 != "display" ] && [ $1 != "brightness" ] && [ $1 != "filesystem" ] && [ $1 != "timers" ] && [ $1 != "settings" ] && [ $1 != "services" ] && [ $1 != "update" ] && [ $1 != "audio" ] && [ $1 != "rtc" ] && [ $1 != "reset" ] && [ $1 != "rpicam" ] && [ $1 != "resize" ] && [ $1 != "version" ]; then
+    if [ $1 != "display" ] && [ $1 != "brightness" ] && [ $1 != "filesystem" ] && [ $1 != "timers" ] && [ $1 != "settings" ] && [ $1 != "services" ] && [ $1 != "update" ] && [ $1 != "audio" ] && [ $1 != "rtc" ] && [ $1 != "reset" ] && [ $1 != "rpicam" ] && [ $1 != "resize" ] && [ $1 != "usb" ] && [ $1 != "gpio" ] && [ $1 != "version" ]; then
 	cs_echo "Unknown command:"
 	cs_echo "${YELLOW}${BOLD}Syntax: crankshaft display|brightness|filesystem|timers|audio|settings|services|rpicam|reset|resize|update|version${RESET}"
 	exit 0
@@ -129,7 +129,7 @@ if [ ! -z $1 ]; then
 	    save)
 		if [ -f ${BRIGHTNESS_FILE} ]; then
 		    cs_bootrw
-		    cat ${BRIGHTNESS_FILE} > ${CS_BRIGHTNESS_STORE_FILE}
+		    sudo sh -c 'cat '${BRIGHTNESS_FILE}' > '${CS_BRIGHTNESS_STORE_FILE}
 		    cs_echo "Brightness Level Saved"
 		    cs_bootro
 		else
@@ -140,14 +140,12 @@ if [ ! -z $1 ]; then
 	    restore)
 		if [ -f ${BRIGHTNESS_FILE} ]; then
 		    if [ -f ${CS_BRIGHTNESS_STORE_FILE} ]; then
-			cs_bootrw
-			sudo cat ${CS_BRIGHTNESS_STORE_FILE} > ${BRIGHTNESS_FILE}
-			cs_bootro
-		    else
-			cs_bootrw
-			echo ${BR_MAX} > ${BRIGHTNESS_FILE}
+			LVL=`cat ${CS_BRIGHTNESS_STORE_FILE}`
+			echo ${LVL} > ${BRIGHTNESS_FILE}
 			cs_echo "Brightness Level Restored"
-			cs_bootro
+		    else
+			echo ${BR_MAX} > ${BRIGHTNESS_FILE}
+			cs_echo "Brightness Level Restored by default value"
 		    fi
 		else
     		    cs_echo "No device brightness file present"
@@ -157,9 +155,7 @@ if [ ! -z $1 ]; then
 		if [ -f ${BRIGHTNESS_FILE} ]; then
 		    LVL=`cat ${BRIGHTNESS_FILE}`
 		    if [ $((${LVL} + ${BR_STEP})) -le ${BR_MAX} ]; then
-			cs_bootrw
 			echo $((${LVL} + ${BR_STEP})) > ${BRIGHTNESS_FILE}
-			cs_bootro
 			cs_echo "Brightness Level Increased To: $((${LVL} + ${BR_STEP}))"
 		    fi
 		else
@@ -170,40 +166,27 @@ if [ ! -z $1 ]; then
 		if [ -f ${BRIGHTNESS_FILE} ]; then
 		    LVL=`cat ${BRIGHTNESS_FILE}`
 		    if [ $((${LVL} - ${BR_STEP})) -ge ${BR_MIN} ]; then
-			cs_bootrw
 			echo $((${LVL} - ${BR_STEP})) > ${BRIGHTNESS_FILE}
-			cs_bootro
 			cs_echo "Brightness Level Reduced To: $((${LVL} + ${BR_STEP}))"
 		    fi
 		else
     		    cs_echo "No device brightness file present"
 		fi
 		;;
-	    set)
-		if [ ! -z $3 ]; then
-		    if [ $3 == "min" ]; then
-			if [ -f ${BRIGHTNESS_FILE} ]; then
-			    cs_bootrw
-			    echo ${BR_MIN} > ${BRIGHTNESS_FILE}
-			    sudo cat ${BRIGHTNESS_FILE} > ${CS_BRIGHTNESS_STORE_FILE}
-			    cs_bootro
-			else
-    			    cs_echo "No device brightness file present"
-			fi
-		    elif [ $3 == "max" ]; then
-			if [ -f ${BRIGHTNESS_FILE} ]; then
-			    cs_bootrw
-			    echo ${BR_MAX} > ${BRIGHTNESS_FILE}
-			    sudo cat ${BRIGHTNESS_FILE} > ${CS_BRIGHTNESS_STORE_FILE}
-			    cs_bootro
-			else
-    			    cs_echo "No device brightness file present"
-			fi
-		    else
-			cs_echo "${YELLOW}${BOLD}Syntax: crankshaft brightness set min|max${RESET}"
-		    fi
+	    min)
+		if [ -f ${BRIGHTNESS_FILE} ]; then
+		    echo ${BR_MIN} > ${BRIGHTNESS_FILE}
+		    cs_echo "Brightness Level Set To Min: ${BR_MIN}"
 		else
-		    cs_echo "${YELLOW}${BOLD}Syntax: crankshaft brightness set min|max${RESET}"
+		    cs_echo "No device brightness file present"
+		fi
+		;;
+	    max)
+		if [ -f ${BRIGHTNESS_FILE} ]; then
+		    echo ${BR_MAX} > ${BRIGHTNESS_FILE}
+		    cs_echo "Brightness Level Set To Max: ${BR_MAX}"
+		else
+		    cs_echo "No device brightness file present"
 		fi
 		;;
 	    get)
@@ -225,8 +208,18 @@ if [ ! -z $1 ]; then
 		    cs_echo "${YELLOW}${BOLD}Syntax: crankshaft brightness get location|level${RESET}"
 		fi
 		;;
+	    set)
+		if [ ! -z $3 ]; then
+		    if [ -f ${BRIGHTNESS_FILE} ]; then
+			echo $3 > ${BRIGHTNESS_FILE}
+			cs_echo "Brightness Level Set To Min: $3"
+		    else
+			cs_echo "No device brightness file present"
+		    fi
+		fi
+		;;
 	    *)
-		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft brightness save|restore|up|down|set|get${RESET}"
+		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft brightness save|restore|up|down|min|max|set|get${RESET}"
 		;;
 	esac
     fi
@@ -478,13 +471,13 @@ if [ ! -z $1 ]; then
 	    on)
 		sudo vcgencmd display_power 1 >/dev/null 2>&1
 		if [ -f /sys/class/backlight/rpi_backlight/bl_power ]; then
-		    sudo echo 0 > /sys/class/backlight/rpi_backlight/bl_power
+		    sudo sh -c 'echo 0 > /sys/class/backlight/rpi_backlight/bl_power'
 		fi
 		;;
 	    off)
 		sudo vcgencmd display_power 0 >/dev/null 2>&1
 		if [ -f /sys/class/backlight/rpi_backlight/bl_power ]; then
-		    sudo echo 1 > /sys/class/backlight/rpi_backlight/bl_power
+		    sudo sh -c 'echo 1 > /sys/class/backlight/rpi_backlight/bl_power'
 		fi
 		;;
 	    autodetect)
@@ -932,6 +925,130 @@ if [ ! -z $1 ]; then
 	esac
     fi
 
+    #usb
+    if [ $1 == "usb" ]; then
+	case $2 in
+	    list)
+		cs_echo "This usb mass storage drives was detected:"
+		cs_echo ""
+		REMOVABLE_DRIVES=""
+		for _device in /sys/block/*/device; do
+		    if echo $(readlink -f "$_device")|egrep -q "usb"; then
+		        _disk=$(echo "$_device" | cut -f4 -d/)
+			cs_echo "Detected Drive: ${CYAN}${BOLD}${_disk}${RESET}"
+			cs_echo "Label 1st Part: ${GREEN}${BOLD}$(sudo blkid /dev/${_disk}1 | sed 's/.*LABEL="//' | cut -d'"' -f1) ${RESET}"
+			cs_echo ""
+			cs_echo "Mount: ${MAGENTA}${BOLD}crankshaft usb mount ${RESET}${CYAN}${BOLD}${_disk}${RESET}"
+			cs_echo ""
+			cs_echo "${RED}${BOLD}Note${RESET}: Only 1st partition will be used for mount!"
+		    fi
+		done
+		;;
+	    mount)
+		if [ ! -z $3 ]; then
+		    DEVICE=$3
+		    DEVICE="${DEVICE}1"
+		    if [ ! -d /media/usb ]; then
+			cs_systemrw
+			sudo mkdir /media/usb
+			cs_systemro
+		    fi
+		    if sudo mount | grep /media/usb > /dev/null; then
+			cs_echo "${YELLOW}${BOLD}Destination folder is still mounted - unmount it before new mount!${RESET}"
+			exit 0
+		    fi
+		    sudo mount /dev/$DEVICE /media/usb
+		    if [ $? -ne 0 ]; then
+			cs_echo "${RED}${BOLD}Mount was not possible - abbort...${RESET}"
+		    else
+			cs_echo "${GREEN}${BOLD}Mount successfull${RESET} - Device $(sudo blkid /dev/$DEVICE | sed 's/.*LABEL="//' | cut -d'"' -f1)  mountet to /media/usb"
+		    fi
+		fi
+		;;
+	    umount)
+		sudo umount /media/usb
+		if [ $? -ne 0 ]; then
+		    cs_echo "${RED}${BOLD}Unmount was not possible - abbort...${RESET}"
+		    cs_echo ""
+		else
+		    cs_echo "${GREEN}${BOLD}Unmount successfull - You can now remove device.${RESET}"
+		    cs_echo ""
+		    cs_echo "Done."
+		fi
+		;;
+	    *)
+		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft usb list|mount|unmount${RESET}"
+		;;
+	esac
+    fi
+
+    #gpio
+    if [ $1 == "gpio" ]; then
+	case $2 in
+	    status)
+		if [ $ENABLE_GPIO -ne 1 ]; then
+		    cs_echo ""
+		    cs_echo "${RED}${BOLD}Note${RESET}: Usage of gpio's is not enabled during boot."
+		    cs_echo ""
+		fi
+
+		DEV=$(gpio -g read $DEV_PIN)
+		if [ ${#DEV_PIN} -ne 2 ]; then
+		    SHOW_DEV="0"$DEV_PIN
+		else
+		    SHOW_DEV=$DEV_PIN
+		fi
+		INV=$(gpio -g read $INVERT_PIN)
+		if [ ${#INV_PIN} -ne 2 ]; then
+		    SHOW_INV="0"$INVERT_PIN
+		else
+		    SHOW_INV=$INV_PIN
+		fi
+		X11=$(gpio -g read $X11_PIN)
+		if [ ${#X11_PIN} -ne 2 ]; then
+		    SHOW_X11="0"$X11_PIN
+		else
+		    SHOW_X11=$X11_PIN
+		fi
+
+		cs_echo "${YELLOW}${BOLD}Dev Mode${RESET}"
+		cs_echo "---------------------------------------------------------------"
+		cs_echo "GPIO: $SHOW_DEV - State: $DEV"
+		if [ $DEV -eq 1 ]; then
+		    cs_echo "${GREEN}${BOLD}Untriggered${RESET}"
+		else
+		    cs_echo "${RED}${BOLD}Triggered${RESET}"
+		fi
+
+		cs_echo ""
+		cs_echo "${YELLOW}${BOLD}Invert Mode${RESET}"
+		cs_echo "---------------------------------------------------------------"
+		cs_echo "GPIO: $SHOW_INV - State: $INV"
+		if [ $INV -eq 1 ]; then
+		    cs_echo "${GREEN}${BOLD}Untriggered${RESET}"
+		else
+		    cs_echo "${RED}${BOLD}Triggered${RESET}"
+		fi
+
+		cs_echo ""
+		cs_echo "${YELLOW}${BOLD}X11 Mode${RESET}"
+		cs_echo "---------------------------------------------------------------"
+		cs_echo "GPIO: $SHOW_X11 - State: $X11"
+		if [ $X11 -eq 1 ]; then
+		    cs_echo "${GREEN}${BOLD}Untriggered${RESET}"
+		else
+		    cs_echo "${RED}${BOLD}Triggered${RESET}"
+		fi
+		;;
+	    pinout)
+		pinout
+		;;
+	    *)
+		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft gpio state${RESET}"
+		;;
+	esac
+    fi
+
     #resize partition and fs
     if [ $1 == "resize" ]; then
 	cs_systemrw
@@ -947,8 +1064,6 @@ if [ ! -z $1 ]; then
 	cs_echo "Start filesystem resize:"
 	cs_echo ""
 	sudo resize2fs /dev/mmcblk0p2
-	cs_echo ""
-	cs_echo "Done!"
 	cs_systemro
     fi
 
@@ -969,16 +1084,16 @@ else
     echo "      |- autodetect           - Try to detect display by usb touch controller and setup"
     echo ""
     echo "brightness                    Handle Display Backlight"
+    echo "         |- min               - Set Display Brightness To Min"
+    echo "         |- max               - Set Display Brightness To Max"
     echo "         |- up                - Increase Brightness"
     echo "         |- down              - Decrease Brightness"
     echo "         |- save              - Save Brightness Level"
     echo "         |- restore           - Restore Brightness Level"
+    echo "         |- set x             - Set Display Brightness to x"
     echo "         |- get"
-    echo "              |- level        - Get Current Brighntess Level"
+    echo "              |- level        - Get Current Brightness Level"
     echo "              |- location     - Get Device Brightness File Location"
-    echo "         |- set"
-    echo "              |- min          - Set Display Brightness To Min"
-    echo "              |- max          - Set Display Brightness To Max"
     echo ""
     echo "filesystem                    Handle Filesystem"
     echo "         |- boot"
@@ -1058,6 +1173,15 @@ else
     echo ""
     echo "resize                        Resize root partition and filesystem on sdcard"
     echo ""
+    echo "usb				Handle USB drives"
+    echo "  |- list                     - List available usb mass storage drives"
+    echo "  |- mount x                  - Mount 1st partition from given device (sda,sdb,sdc,...)"
+    echo "  |- umount                   - Unmount mounted usb drive"
+    echo ""
+    echo "gpio				GPIO relted stuff"
+    echo "  |- status                   - List current state of gpio pins"
+    echo "  |- pinout                   - Show info's about the system / pin layout"
+    echo ""
     echo "update                        Handle Updates"
     echo "     |- udev                  - Check And Update udev Rules For Device Detection"
     echo "     |- csmt                  - Check And Update Crankshaft Management Tool"
@@ -1066,3 +1190,4 @@ else
 fi
 
 exit 0
+
