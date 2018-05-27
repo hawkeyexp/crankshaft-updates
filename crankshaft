@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.2.8
+version=0.2.9
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -892,6 +892,14 @@ if [ ! -z $1 ]; then
 		fi
 		;;
 	    flash)
+		# rerun in background
+		if [ -z $3 ]; then
+		    $(basename $0) update flash bachground &
+		    exit 0
+		fi
+		if [ $3 != "background" ]; then
+		    exit 0
+		fi
 		# Stop all services which can cause problems during flash
 		sudo systemctl stop autoapp.service
 		sudo systemctl stop disconnect.service
@@ -943,8 +951,9 @@ if [ ! -z $1 ]; then
 					echo "${GREEN}${BOLD}Image is undemaged und ready to flash!${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
                                         echo "Backup config files from crankshaft..." > /dev/tty3
-                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup/crankshaft/boot
-                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup/crankshaft/etc
+                                        sudo rm -rf /tmp/${PARTITION}/cs-backup
+                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup/boot/crankshaft
+                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup/etc
                                         sudo cp -f /boot/config.txt /tmp/${PARTITION}/cs-backup/boot/
                                         sudo cp -f /boot/crankshaft/crankshaft_env.sh /tmp/${PARTITION}/cs-backup/boot/crankshaft/
                                         sudo cp -f /boot/crankshaft/gpio2kbd.cfg /tmp/${PARTITION}/cs-backup/boot/crankshaft/
@@ -967,6 +976,7 @@ if [ ! -z $1 ]; then
 					    sleep 10
                                             sudo init 0
                                         else
+                                            sudo init 6
 		                            clear > /dev/tty3
 		                            echo "${MAGENTA}${BOLD}Crankshaft Management Tool v$version is executing command...${RESET}" > /dev/tty3
 		                            echo "" > /dev/tty3
@@ -974,7 +984,6 @@ if [ ! -z $1 ]; then
 					    echo "" > /dev/tty3
 					    echo "${YELLOW}${BOLD}System will reboot in 10 seconds back to crankshaft!${RESET}" > /dev/tty3
 					    sleep 10
-                                            sudo init 6
                                         fi
 				    else
 					echo "" > /dev/tty3
@@ -995,7 +1004,6 @@ if [ ! -z $1 ]; then
 		    fi
 		done
 		;;
-
 	    *)
 		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft update udev|csmt|flash${RESET}"
 		;;
