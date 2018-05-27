@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.2.5
+version=0.2.6
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -694,6 +694,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable devmode.service >/dev/null 2>&1
 		sudo systemctl enable display.service >/dev/null 2>&1
 		sudo systemctl enable update.service >/dev/null 2>&1
+		sudo systemctl enable usbrestore.service >/dev/null 2>&1
 		sudo systemctl enable user_startup.service >/dev/null 2>&1
 		sudo systemctl disable autoapp.service >/dev/null 2>&1
 		sudo systemctl disable ssh.service >/dev/null 2>&1
