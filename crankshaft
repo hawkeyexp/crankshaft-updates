@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.2.2
+version=0.2.3
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -534,7 +534,7 @@ if [ ! -z $1 ]; then
 		    sudo cp -f /boot/crankshaft/openauto.ini /tmp/openauto.ini
 		else
 		    echo "[General]" > /tmp/openauto.ini
-		    echo "ShowClock=false" >> /tmp/openauto.ini
+		    echo "ShowClock=true" >> /tmp/openauto.ini
 		    echo "[Video]" >> /tmp/openauto.ini
 		    echo "FPS=1" >> /tmp/openauto.ini
 		    echo "OMXLayerIndex=0" >> /tmp/openauto.ini
