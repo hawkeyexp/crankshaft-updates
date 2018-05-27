@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.1.9
+version=0.2.2
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -22,6 +22,8 @@ function cs_bootro() {
 }
 function cs_systemrw() {
     if [ ! -f /tmp/dev_mode_enabled ] ; then
+	sudo mount -o remount,rw /
+    else
 	sudo mount -o remount,rw /
     fi
 }
@@ -112,7 +114,7 @@ function cs_echo() {
 if [ ! -z $1 ]; then
     if [ $1 != "display" ] && [ $1 != "brightness" ] && [ $1 != "filesystem" ] && [ $1 != "timers" ] && [ $1 != "settings" ] && [ $1 != "services" ] && [ $1 != "update" ] && [ $1 != "audio" ] && [ $1 != "rtc" ] && [ $1 != "reset" ] && [ $1 != "rpicam" ] && [ $1 != "resize" ] && [ $1 != "usb" ] && [ $1 != "gpio" ] && [ $1 != "version" ]; then
 	cs_echo "Unknown command:"
-	cs_echo "${YELLOW}${BOLD}Syntax: crankshaft display|brightness|filesystem|timers|audio|settings|services|rpicam|reset|resize|update|version${RESET}"
+	cs_echo "${YELLOW}${BOLD}Syntax: crankshaft display|brightness|filesystem|timers|audio|settings|services|rpicam|reset|usb|resize|update|version${RESET}"
 	exit 0
     fi
     # clear shell if user logged in
@@ -301,7 +303,12 @@ if [ ! -z $1 ]; then
 			sudo systemctl stop disconnect.service >/dev/null 2>&1
 			cs_systemrw
 			if [ ! -z $DISCONNECTION_SCREEN_POWEROFF_SECS ]; then
-			    sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_SCREEN_POWEROFF_SECS's/' /etc/systemd/system/disconnect.timer
+			    if [ -f /etc/first_start_done ]; then
+				sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_SCREEN_POWEROFF_SECS's/' /etc/systemd/system/disconnect.timer
+			    else
+				sudo sed -i 's/^OnActiveSec=.*/OnActiveSec=300s/' /etc/systemd/system/disconnect.timer
+				sudo touch /etc/first_start_done
+			    fi
 			fi
 			cs_systemro
 			sudo systemctl start disconnect.timer >/dev/null 2>&1
@@ -508,7 +515,7 @@ if [ ! -z $1 ]; then
 		fi
 		;;
 	    *)
-		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft display on|off|autosetup${RESET}"
+		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft display on|off|autodetect${RESET}"
 		;;
 	esac
     fi
@@ -961,7 +968,7 @@ if [ ! -z $1 ]; then
 		    if [ $? -ne 0 ]; then
 			cs_echo "${RED}${BOLD}Mount was not possible - abbort...${RESET}"
 		    else
-			cs_echo "${GREEN}${BOLD}Mount successfull${RESET} - Device $(sudo blkid /dev/$DEVICE | sed 's/.*LABEL="//' | cut -d'"' -f1)  mountet to /media/usb"
+			cs_echo "${GREEN}${BOLD}Mount successfull${RESET} - Device /dev/$DEVICE ($(sudo blkid /dev/$DEVICE | sed 's/.*LABEL="//' | cut -d'"' -f1))  mountet to /media/usb"
 		    fi
 		fi
 		;;
@@ -1040,11 +1047,11 @@ if [ ! -z $1 ]; then
 		    cs_echo "${RED}${BOLD}Triggered${RESET}"
 		fi
 		;;
-	    pinout)
+	    help)
 		pinout
 		;;
 	    *)
-		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft gpio state${RESET}"
+		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft gpio status|help${RESET}"
 		;;
 	esac
     fi
@@ -1180,7 +1187,7 @@ else
     echo ""
     echo "gpio				GPIO relted stuff"
     echo "  |- status                   - List current state of gpio pins"
-    echo "  |- pinout                   - Show info's about the system / pin layout"
+    echo "  |- help                     - Show info's about the system / pin layout"
     echo ""
     echo "update                        Handle Updates"
     echo "     |- udev                  - Check And Update udev Rules For Device Detection"
