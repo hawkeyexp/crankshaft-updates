@@ -951,9 +951,12 @@ if [ ! -z $1 ]; then
 					    sleep 10
                                             sudo init 0
                                         else
+		                            clear > /dev/tty3
+		                            echo "${MAGENTA}${BOLD}Crankshaft Management Tool v$version is executing command...${RESET}" > /dev/tty3
+		                            echo "" > /dev/tty3
 					    echo "${GREEN}${BOLD}Flash successfull!${RESET}" > /dev/tty3
 					    echo "" > /dev/tty3
-					    echo "${GREEN}${BOLD}System will reboot in 10 seconds back to crankshaft!${RESET}" > /dev/tty3
+					    echo "${YELLOW}${BOLD}System will reboot in 10 seconds back to crankshaft!${RESET}" > /dev/tty3
 					    sleep 10
                                             sudo init 6
                                         fi
@@ -1269,12 +1272,12 @@ else
     echo ""
     echo "resize                        Resize root partition and filesystem on sdcard"
     echo ""
-    echo "usb				Handle USB drives"
+    echo "usb                           Handle USB drives"
     echo "  |- list                     - List available usb mass storage drives"
     echo "  |- mount x                  - Mount 1st partition from given device (sda,sdb,sdc,...)"
     echo "  |- umount                   - Unmount mounted usb drive"
     echo ""
-    echo "gpio				GPIO relted stuff"
+    echo "gpio                          GPIO relted stuff"
     echo "  |- status                   - List current state of gpio pins"
     echo "  |- help                     - Show info's about the system / pin layout"
     echo ""
@@ -1284,7 +1287,8 @@ else
     echo "     |- flash                 - Search for updates on usb drives and flash sd card"
     echo "                                Warning: This is a dirty flash of sd card!"
     echo "                                Usually all works fine but if something fails your"
-    echo "                                system won't boot anymore. Your have to flash the"
+    echo "                                system won't boot anymore. If happened your have to"
+    echo "                                flash the"
     echo "                                sdcard manually!"
     echo ""
     echo "version                       Show Vesion Of CSMT"
