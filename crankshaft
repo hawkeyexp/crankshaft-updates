@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.2.6
+version=0.2.8
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -86,7 +86,7 @@ function cs_rtc() {
     sudo systemctl disable fake-hwclock.service >/dev/null 2>&1
     sudo systemctl enable hwclock-load.service >/dev/null 2>&1
     sudo systemctl enable hwclock-save.service >/dev/null 2>&1
-    sudo systemd daemon-reload
+    sudo systemctl daemon-reload
     sudo dpkg-reconfigure tzdata
 }
 
@@ -673,7 +673,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl disable hwclock-load.service >/dev/null 2>&1
 		sudo systemctl disable hwclock-save.service >/dev/null 2>&1
 		sudo systemctl enable fake-hwclock.service >/dev/null 2>&1
-		sudo systemd daemon-reload
+		sudo systemctl daemon-reload
 		cs_systemro
 		cs_bootro
 		;;
@@ -933,6 +933,7 @@ if [ ! -z $1 ]; then
 				    echo "" > /dev/tty3
 				    MD5FILE=$(sudo sh -c 'pv /tmp/'${PARTITION}'/'${UPDATEFILE}' 2>/dev/tty3 | md5sum | cut -d" " -f1')
 				    MD5SOURCE=$(cat /tmp/${PARTITION}/${UPDATEFILE}.md5)
+                                    SIZE=$(($(wc -c < "/tmp/${PARTITION}/${UPDATEFILE}") / 1024 / 1024 / 1014))
 				    echo $MD5FILE > /dev/tty3
 				    echo $MD5SOURCE > /dev/tty3
 				    if [ "$MD5FILE" == "$MD5SOURCE" ]; then
@@ -942,21 +943,23 @@ if [ ! -z $1 ]; then
 					echo "${GREEN}${BOLD}Image is undemaged und ready to flash!${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
                                         echo "Backup config files from crankshaft..." > /dev/tty3
-                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup/crankshaft
-                                        sudo cp -f /boot/config.txt /tmp/${PARTITION}/cs-backup/
-                                        sudo cp -f /boot/crankshaft/crankshaft_env.sh /tmp/${PARTITION}/cs-backup/crankshaft/
-                                        sudo cp -f /boot/crankshaft/gpio2kbd.cfg /tmp/${PARTITION}/cs-backup/crankshaft/
-                                        sudo cp -f /boot/crankshaft/startup.py /tmp/${PARTITION}/cs-backup/crankshaft/
-                                        sudo cp -f /boot/crankshaft/startup.sh /tmp/${PARTITION}/cs-backup/crankshaft/
-                                        sudo cp -f /boot/crankshaft/triggerhappy.conf /tmp/${PARTITION}/cs-backup/crankshaft/
-                                        sudo cp -f /boot/crankshaft/brightness /tmp/${PARTITION}/cs-backup/crankshaft/
-                                        sudo cp -f /boot/crankshaft/volume /tmp/${PARTITION}/cs-backup/crankshaft/
-                                        sudo cp -f /boot/crankshaft/openauto.ini /tmp/${PARTITION}/cs-backup/crankshaft/
+                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup/crankshaft/boot
+                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup/crankshaft/etc
+                                        sudo cp -f /boot/config.txt /tmp/${PARTITION}/cs-backup/boot/
+                                        sudo cp -f /boot/crankshaft/crankshaft_env.sh /tmp/${PARTITION}/cs-backup/boot/crankshaft/
+                                        sudo cp -f /boot/crankshaft/gpio2kbd.cfg /tmp/${PARTITION}/cs-backup/boot/crankshaft/
+                                        sudo cp -f /boot/crankshaft/startup.py /tmp/${PARTITION}/cs-backup/boot/crankshaft/
+                                        sudo cp -f /boot/crankshaft/startup.sh /tmp/${PARTITION}/cs-backup/boot/crankshaft/
+                                        sudo cp -f /boot/crankshaft/triggerhappy.conf /tmp/${PARTITION}/cs-backup/boot/crankshaft/
+                                        sudo cp -f /boot/crankshaft/brightness /tmp/${PARTITION}/cs-backup/boot/crankshaft/
+                                        sudo cp -f /boot/crankshaft/volume /tmp/${PARTITION}/cs-backup/boot/crankshaft/
+                                        sudo cp -f /boot/crankshaft/openauto.ini /tmp/${PARTITION}/cs-backup/boot/crankshaft/
+                                        sudo cp -f /etc/timezone /tmp/${PARTITION}/cs-backup/etc/
 					echo "" > /dev/tty3
 					echo "${CYAN}${BOLD}Starting flash in 10 seconds...${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
 					sleep 10
-					sudo dd if=/tmp/${PARTITION}/${UPDATEFILE} bs=1M | pv -s2G 2>/dev/tty3 | sudo dd of=/dev/mmcblk0
+					sudo dd if=/tmp/${PARTITION}/${UPDATEFILE} bs=1M | pv -s${SIZE}G 2>/dev/tty3 | sudo dd of=/dev/mmcblk0
                                         if [ $? -ne 0 ]; then
 					    echo "${RED}${BOLD}Flashing failed! - System will be broken!${RESET}" > /dev/tty3
 					    echo "" > /dev/tty3
@@ -1309,5 +1312,3 @@ else
 fi
 
 exit 0
-
-
