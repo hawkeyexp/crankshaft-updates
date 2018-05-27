@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.2.4
+version=0.2.5
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -941,14 +941,14 @@ if [ ! -z $1 ]; then
 					echo "${GREEN}${BOLD}Image is undemaged und ready to flash!${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
                                         echo "Backup config files from crankshaft..." > /dev/tty3
-                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup
+                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup/crankshaft
                                         sudo cp -f /boot/config.txt /tmp/${PARTITION}/cs-backup/
                                         sudo cp -f /boot/crankshaft/crankshaft_env.sh /tmp/${PARTITION}/cs-backup/crankshaft/
                                         sudo cp -f /boot/crankshaft/gpio2kbd.cfg /tmp/${PARTITION}/cs-backup/crankshaft/
                                         sudo cp -f /boot/crankshaft/startup.py /tmp/${PARTITION}/cs-backup/crankshaft/
                                         sudo cp -f /boot/crankshaft/startup.sh /tmp/${PARTITION}/cs-backup/crankshaft/
                                         sudo cp -f /boot/crankshaft/triggerhappy.conf /tmp/${PARTITION}/cs-backup/crankshaft/
-                                        sudo cp -f /boot/crankshaft/brigthness /tmp/${PARTITION}/cs-backup/crankshaft/
+                                        sudo cp -f /boot/crankshaft/brightness /tmp/${PARTITION}/cs-backup/crankshaft/
                                         sudo cp -f /boot/crankshaft/volume /tmp/${PARTITION}/cs-backup/crankshaft/
                                         sudo cp -f /boot/crankshaft/openauto.ini /tmp/${PARTITION}/cs-backup/crankshaft/
 					echo "" > /dev/tty3
@@ -977,7 +977,8 @@ if [ ! -z $1 ]; then
 					echo "${RED}${BOLD}Image check has failed - abort.${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
 					echo "${RED}${BOLD}System will reboot in 30 sec.${RESET}" > /dev/tty3
-					sudo shutdown -r -t 30
+                                        sleep 30
+					sudo init 6
 				    fi
 				else
 				    echo "No update file in this drive." > /dev/tty3
