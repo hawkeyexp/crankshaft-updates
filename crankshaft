@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.2.3
+version=0.2.4
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -890,8 +890,94 @@ if [ ! -z $1 ]; then
 		    fi
 		fi
 		;;
+	    flash)
+		# Stop all services which can cause problems during flash
+		sudo systemctl stop autoapp.service
+		sudo systemctl stop disconnect.service
+		sudo systemctl stop disconnect.timer
+		sudo systemctl stop shutdown.service
+		sudo systemctl stop shutdown.timer
+		sudo shutdown -c
+		sudo mount -o remount,ro /boot
+		sudo mount -o remount,ro /
+		clear > /dev/tty3
+		echo "${MAGENTA}${BOLD}Crankshaft Management Tool v$version is executing command...${RESET}" > /dev/tty3
+		echo "" > /dev/tty3
+		for _device in /sys/block/*/device; do
+		    if echo $(readlink -f "$_device")|egrep -q "usb"; then
+		        _disk=$(echo "$_device" | cut -f4 -d/)
+			DEVICE="/dev/${_disk}1"
+			PARTITION="${_disk}1"
+			LABEL=$(sudo blkid /dev/${PARTITION} | sed 's/.*LABEL="//' | cut -d'"' -f1)
+			FSTYPE=$(sudo blkid /dev/${PARTITION} | sed 's/.*TYPE="//' | cut -d'"' -f1)
+			echo "Detected Drive: ${CYAN}${BOLD}${PARTITION}${RESET}" > /dev/tty3
+			echo "Label 1st Part: ${GREEN}${BOLD}${LABEL}${RESET}" > /dev/tty3
+			echo "PartFilesystem: ${YELLOW}${BOLD}${FSTYPE}${RESET}" > /dev/tty3
+			echo "" > /dev/tty3
+			if [ $FSTYPE == "fat" ] || [ $FSTYPE == "vfat" ] || [ $FSTYPE == "ext3" ] || [ $FSTYPE == "ext4" ]; then
+			    sudo umount /tmp/${PARTITION} >/dev/null 2>&1
+			    sudo mkdir /tmp/${PARTITION} >/dev/null 2>&1
+			    sudo mount -t auto ${DEVICE} /tmp/${PARTITION}
+			    if [ $? -ne 0 ]; then
+				echo "${RED}${BOLD}Mount was not possible - skipping drive...${RESET}" > /dev/tty3
+				echo "" > /dev/tty3
+			    else
+				echo "${GREEN}${BOLD}Mount successfull - check for update file...${RESET}" > /dev/tty3
+				echo "" > /dev/tty3
+				UPDATEFILE=$(ls /tmp/${PARTITION} | grep .*crankshaft-ng.img | head -1)
+				if [ ! -z ${UPDATEFILE} ]; then
+				    echo "${CYAN}${BOLD}Update found! - ${UPDATEFILE}${RESET}" > /dev/tty3
+				    echo "" > /dev/tty3
+				    echo "${YELLOW}${BOLD}Checking file...${RESET}" > /dev/tty3
+				    echo "" > /dev/tty3
+				    MD5FILE=$(sudo sh -c 'pv /tmp/'${PARTITION}'/'${UPDATEFILE}' 2>/dev/tty3 | md5sum | cut -d" " -f1')
+				    MD5SOURCE=$(cat /tmp/${PARTITION}/${UPDATEFILE}.md5)
+				    echo $MD5FILE > /dev/tty3
+				    echo $MD5SOURCE > /dev/tty3
+				    if [ "$MD5FILE" == "$MD5SOURCE" ]; then
+					clear > /dev/tty3
+					echo "${MAGENTA}${BOLD}Crankshaft Management Tool v$version is executing command...${RESET}" > /dev/tty3
+					echo "" > /dev/tty3
+					echo "${GREEN}${BOLD}Image is undemaged und ready to flash!${RESET}" > /dev/tty3
+					echo "" > /dev/tty3
+					echo "${CYAN}${BOLD}Starting flash in 10 seconds...${RESET}" > /dev/tty3
+					echo "" > /dev/tty3
+					sleep 10
+					sudo dd if=/tmp/${PARTITION}/${UPDATEFILE} bs=1M | pv -s2G 2>/dev/tty3 | sudo dd of=/dev/mmcblk0
+                                        if [ $? -ne 0 ]; then
+					    echo "${RED}${BOLD}Flashing failed! - System will be broken!${RESET}" > /dev/tty3
+					    echo "" > /dev/tty3
+					    echo "${RED}${BOLD}Shutdown in 10 seconds - Flash sdcard manually!!!${RESET}" > /dev/tty3
+					    sleep 10
+                                            sudo init 0
+                                        else
+					    echo "${GREEN}${BOLD}Flash successfull!${RESET}" > /dev/tty3
+					    echo "" > /dev/tty3
+					    echo "${GREEN}${BOLD}System will reboot in 10 seconds back to crankshaft!${RESET}" > /dev/tty3
+					    sleep 10
+                                            sudo init 6
+                                        fi
+				    else
+					echo "" > /dev/tty3
+					echo "${RED}${BOLD}Image check has failed - abort.${RESET}" > /dev/tty3
+					echo "" > /dev/tty3
+					echo "${RED}${BOLD}System will reboot in 30 sec.${RESET}" > /dev/tty3
+					sudo shutdown -r -t 30
+				    fi
+				else
+				    echo "No update file in this drive." > /dev/tty3
+				    echo "" > /dev/tty3
+				fi
+				sudo umount /tmp/${PARTITION}
+				sudo rmdir /tmp/${PARTITION}
+			    fi
+			fi
+		    fi
+		done
+		;;
+
 	    *)
-		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft update udev|csmt${RESET}"
+		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft update udev|csmt|flash${RESET}"
 		;;
 	esac
     fi
@@ -942,8 +1028,11 @@ if [ ! -z $1 ]; then
 		for _device in /sys/block/*/device; do
 		    if echo $(readlink -f "$_device")|egrep -q "usb"; then
 		        _disk=$(echo "$_device" | cut -f4 -d/)
+			LABEL=$(sudo blkid /dev/${_disk}1 | sed 's/.*LABEL="//' | cut -d'"' -f1)
+			FSTYPE=$(sudo blkid /dev/${_disk}1 | sed 's/.*TYPE="//' | cut -d'"' -f1)
 			cs_echo "Detected Drive: ${CYAN}${BOLD}${_disk}${RESET}"
-			cs_echo "Label 1st Part: ${GREEN}${BOLD}$(sudo blkid /dev/${_disk}1 | sed 's/.*LABEL="//' | cut -d'"' -f1) ${RESET}"
+			cs_echo "Label 1st Part: ${GREEN}${BOLD}${LABEL}${RESET}"
+			cs_echo "PartFilesystem: ${YELLOW}${BOLD}${FSTYPE}${RESET}"
 			cs_echo ""
 			cs_echo "Mount: ${MAGENTA}${BOLD}crankshaft usb mount ${RESET}${CYAN}${BOLD}${_disk}${RESET}"
 			cs_echo ""
@@ -1192,9 +1281,15 @@ else
     echo "update                        Handle Updates"
     echo "     |- udev                  - Check And Update udev Rules For Device Detection"
     echo "     |- csmt                  - Check And Update Crankshaft Management Tool"
+    echo "     |- flash                 - Search for updates on usb drives and flash sd card"
+    echo "                                Warning: This is a dirty flash of sd card!"
+    echo "                                Usually all works fine but if something fails your"
+    echo "                                system won't boot anymore. Your have to flash the"
+    echo "                                sdcard manually!"
     echo ""
     echo "version                       Show Vesion Of CSMT"
 fi
 
 exit 0
+
 
