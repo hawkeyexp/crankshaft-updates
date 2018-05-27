@@ -940,6 +940,18 @@ if [ ! -z $1 ]; then
 					echo "" > /dev/tty3
 					echo "${GREEN}${BOLD}Image is undemaged und ready to flash!${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
+                                        echo "Backup config files from crankshaft..." > /dev/tty3
+                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup
+                                        sudo cp -f /boot/config.txt /tmp/${PARTITION}/cs-backup/
+                                        sudo cp -f /boot/crankshaft/crankshaft_env.sh /tmp/${PARTITION}/cs-backup/crankshaft/
+                                        sudo cp -f /boot/crankshaft/gpio2kbd.cfg /tmp/${PARTITION}/cs-backup/crankshaft/
+                                        sudo cp -f /boot/crankshaft/startup.py /tmp/${PARTITION}/cs-backup/crankshaft/
+                                        sudo cp -f /boot/crankshaft/startup.sh /tmp/${PARTITION}/cs-backup/crankshaft/
+                                        sudo cp -f /boot/crankshaft/triggerhappy.conf /tmp/${PARTITION}/cs-backup/crankshaft/
+                                        sudo cp -f /boot/crankshaft/brigthness /tmp/${PARTITION}/cs-backup/crankshaft/
+                                        sudo cp -f /boot/crankshaft/volume /tmp/${PARTITION}/cs-backup/crankshaft/
+                                        sudo cp -f /boot/crankshaft/openauto.ini /tmp/${PARTITION}/cs-backup/crankshaft/
+					echo "" > /dev/tty3
 					echo "${CYAN}${BOLD}Starting flash in 10 seconds...${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
 					sleep 10
