@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.3.0
+version=0.3.1
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -894,6 +894,8 @@ if [ ! -z $1 ]; then
 	    flash)
 		# rerun in background
 		if [ -z $3 ]; then
+                    cs_echo ""
+                    cs_echo "Script will be re run in background - this shell is not needed anymore..."
 		    $(basename $0) update flash background &
 		    exit 0
 		fi
