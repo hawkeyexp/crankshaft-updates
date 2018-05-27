@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.3.1
+version=0.3.2
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -952,7 +952,11 @@ if [ ! -z $1 ]; then
 					echo "" > /dev/tty3
 					echo "${GREEN}${BOLD}Image is undemaged und ready to flash!${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
-                                        echo "Backup config files from crankshaft..." > /dev/tty3
+			                echo "${YELLOW}${BOLD}Backup config files from crankshaft...${RESET}" > /dev/tty3
+			                echo "" > /dev/tty3
+			                echo "${RED}${BOLD}Don't remove USB drive on first boot to make restore of backup possible!${RESET}" > /dev/tty3
+			                echo "${RED}${BOLD}Backup USB drive will be auto detected. Restore attempt will executed only one time!${RESET}" > /dev/tty3
+			                echo "" > /dev/tty3
                                         sudo rm -rf /tmp/${PARTITION}/cs-backup
                                         sudo mkdir -p /tmp/${PARTITION}/cs-backup/boot/crankshaft
                                         sudo mkdir -p /tmp/${PARTITION}/cs-backup/etc
