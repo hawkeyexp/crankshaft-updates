@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.2.9
+version=0.3.0
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -894,7 +894,7 @@ if [ ! -z $1 ]; then
 	    flash)
 		# rerun in background
 		if [ -z $3 ]; then
-		    $(basename $0) update flash bachground &
+		    $(basename $0) update flash background &
 		    exit 0
 		fi
 		if [ $3 != "background" ]; then
