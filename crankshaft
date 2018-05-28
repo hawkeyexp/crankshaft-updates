@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.3.5
+version=0.3.6
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -971,7 +971,16 @@ if [ ! -z $1 ]; then
                                         sudo cp -f /boot/crankshaft/openauto.ini /tmp/${PARTITION}/cs-backup/boot/crankshaft/
                                         sudo cp -f /etc/timezone /tmp/${PARTITION}/cs-backup/etc/
 					echo "" > /dev/tty3
-					echo "${CYAN}${BOLD}Starting flash in 10 seconds...${RESET}" > /dev/tty3
+					echo "${CYAN}${BOLD}Starting flash in    seconds...${RESET}" > /dev/tty3
+                                        setterm -cursor off > /dev/tty3
+                                        for i in {10..01}
+                                        do
+                                        tput cup 10 18 $l
+                                        echo -n "$i" > /dev/tty3
+                                        sleep 1
+                                        done
+					echo "" > /dev/tty3
+					echo "${CYAN}${BOLD}Start...${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
 					sleep 10
 					sudo dd if=/tmp/${PARTITION}/${UPDATEFILE} bs=1M | pv -s${SIZE}G 2>/dev/tty3 | sudo dd of=/dev/mmcblk0
@@ -1320,4 +1329,3 @@ else
 fi
 
 exit 0
-
