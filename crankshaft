@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.3.4
+version=0.3.5
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -982,8 +982,8 @@ if [ ! -z $1 ]; then
 					    sleep 10
                                             sudo init 0
                                         else
-                                            # flash ok - reboot
-                                            sudo init 6
+                                            # flash ok - hard system reboot
+                                            sudo sh -c 'echo b > /proc/sysrq-trigger'
                                         fi
 				    else
 					echo "" > /dev/tty3
@@ -1320,3 +1320,4 @@ else
 fi
 
 exit 0
+
