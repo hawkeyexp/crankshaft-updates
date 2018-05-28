@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.3.7
+version=0.3.8
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -979,6 +979,9 @@ if [ ! -z $1 ]; then
                                         echo -n "$i" > /dev/tty3
                                         sleep 1
                                         done
+                                        tput cup 10 18 > /dev/tty3
+                                        echo -n "00" > /dev/tty3
+					echo "" > /dev/tty3
 					echo "" > /dev/tty3
 					echo "${CYAN}${BOLD}Start...${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
