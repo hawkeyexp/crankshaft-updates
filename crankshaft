@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.3.6
+version=0.3.7
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -975,7 +975,7 @@ if [ ! -z $1 ]; then
                                         setterm -cursor off > /dev/tty3
                                         for i in {10..01}
                                         do
-                                        tput cup 10 18 $l
+                                        tput cup 10 18 > /dev/tty3
                                         echo -n "$i" > /dev/tty3
                                         sleep 1
                                         done
