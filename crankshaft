@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.3.2
+version=0.3.4
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -950,7 +950,7 @@ if [ ! -z $1 ]; then
 					clear > /dev/tty3
 					echo "${MAGENTA}${BOLD}Crankshaft Management Tool v$version is executing command...${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
-					echo "${GREEN}${BOLD}Image is undemaged und ready to flash!${RESET}" > /dev/tty3
+					echo "${GREEN}${BOLD}Image is undemaged and ready to flash!${RESET}" > /dev/tty3
 					echo "" > /dev/tty3
 			                echo "${YELLOW}${BOLD}Backup config files from crankshaft...${RESET}" > /dev/tty3
 			                echo "" > /dev/tty3
@@ -982,14 +982,8 @@ if [ ! -z $1 ]; then
 					    sleep 10
                                             sudo init 0
                                         else
+                                            # flash ok - reboot
                                             sudo init 6
-		                            clear > /dev/tty3
-		                            echo "${MAGENTA}${BOLD}Crankshaft Management Tool v$version is executing command...${RESET}" > /dev/tty3
-		                            echo "" > /dev/tty3
-					    echo "${GREEN}${BOLD}Flash successfull!${RESET}" > /dev/tty3
-					    echo "" > /dev/tty3
-					    echo "${YELLOW}${BOLD}System will reboot in 10 seconds back to crankshaft!${RESET}" > /dev/tty3
-					    sleep 10
                                         fi
 				    else
 					echo "" > /dev/tty3
