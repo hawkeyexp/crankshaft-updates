@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.4.2
+version=0.4.3
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -510,6 +510,26 @@ if [ ! -z $1 ]; then
 		        sudo sh -c "echo 'hdmi_group=2' >> /boot/config.txt"
 		        sudo sh -c "echo 'hdmi_mode=87' >> /boot/config.txt"
 		        sudo sh -c "echo 'hdmi_cvt=800 480 60 6 0 0 0' >> /boot/config.txt"
+		        sudo sh -c "echo 'hdmi_drive=1' >> /boot/config.txt"
+		        sudo sh -c "echo 'hdmi_force_hotplug=1' >> /boot/config.txt"
+			# Disable autodetect
+			sudo sed -i 's/^DISPLAY_AUTO_DETECT=.*/DISPLAY_AUTO_DETECT=0/' /boot/crankshaft/crankshaft_env.sh
+		        cs_bootro
+			sudo /sbin/shutdown -r now
+		    fi
+
+		    # eGalax Inc. Touch Display
+		    check=`/usr/bin/lsusb | grep 0eef:0001 | awk {'print $6'}`
+		    if [ ! -z $check ]; then
+                        cs_show_autodetect
+		        cs_bootrw
+		        sudo sh -c "echo '0eef:0001 - eGalax Inc. Touch Display' > /boot/crankshaft/display_detected"
+		        cs_clean_display_entry
+		        sudo sh -c "echo '' >> /boot/config.txt"
+		        sudo sh -c "echo '# Custom display settings' >> /boot/config.txt"
+		        sudo sh -c "echo 'hdmi_group=2' >> /boot/config.txt"
+		        sudo sh -c "echo 'hdmi_mode=87' >> /boot/config.txt"
+		        sudo sh -c "echo 'hdmi_cvt=800 480 60 3 0 0 0' >> /boot/config.txt"
 		        sudo sh -c "echo 'hdmi_drive=1' >> /boot/config.txt"
 		        sudo sh -c "echo 'hdmi_force_hotplug=1' >> /boot/config.txt"
 			# Disable autodetect
