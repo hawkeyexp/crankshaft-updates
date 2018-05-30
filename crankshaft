@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.4.1
+version=0.4.2
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -91,6 +91,15 @@ function cs_rtc() {
 }
 
 # Display functions
+
+function cs_show_autodetect() {
+    plymouth --hide-splash > /dev/null 2>&1 # hide the boot splash
+    chvt 3
+    echo "[${RED}${BOLD} INFO ${RESET}] *******************************************************" >/dev/tty3
+    echo "[${RED}${BOLD} INFO ${RESET}] Display identified - Setting up..." >/dev/tty3
+    echo "[${RED}${BOLD} INFO ${RESET}] *******************************************************" >/dev/tty3
+}
+
 function cs_clean_display_entry() {
     sudo sed -i 's/^# Custom display settings.*//' /boot/config.txt
     sudo sed -i '/hdmi_group=/d' /boot/config.txt
@@ -492,6 +501,7 @@ if [ ! -z $1 ]; then
 		    # Waveshare Inc. 7inch HDMI LCD(B) Rev2.1
 		    check=`/usr/bin/lsusb | grep 0eef:0005 | awk {'print $6'}`
 		    if [ ! -z $check ]; then
+                        cs_show_autodetect
 		        cs_bootrw
 		        sudo sh -c "echo '0eef:0005 - Waveshare Inc. 7inch HDMI LCD (b) Rev 2.1' > /boot/crankshaft/display_detected"
 		        cs_clean_display_entry
