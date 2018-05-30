@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.4.3
+version=0.4.5
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -747,7 +747,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl daemon-reload >/dev/null 2>&1
 		;;
 	    status)
-		systemctl list-units --type=service --state=active | grep 'Crankshaft\|UNIT'
+		systemctl list-units --type=service --all | grep 'Crankshaft\|UNIT'
 		;;
 	    *)
 		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft services status|reset${RESET}"
