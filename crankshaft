@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.3.8
+version=0.4.1
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -695,7 +695,11 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable display.service >/dev/null 2>&1
 		sudo systemctl enable update.service >/dev/null 2>&1
 		sudo systemctl enable usbrestore.service >/dev/null 2>&1
+		sudo systemctl enable usbflash.service >/dev/null 2>&1
 		sudo systemctl enable user_startup.service >/dev/null 2>&1
+		sudo systemctl enable daymode.timer >/dev/null 2>&1
+		sudo systemctl enable nightmode.timer >/dev/null 2>&1
+		sudo systemctl enable tap2wake.service >/dev/null 2>&1
 		sudo systemctl disable autoapp.service >/dev/null 2>&1
 		sudo systemctl disable ssh.service >/dev/null 2>&1
 		sudo systemctl disable wpa_supplicant.service >/dev/null 2>&1
@@ -710,9 +714,6 @@ if [ ! -z $1 ]; then
 		sudo systemctl disable hwclock-save.service >/dev/null 2>&1
 		sudo systemctl disable bluetooth.service >/dev/null 2>&1
 		sudo systemctl disable hciuart.service >/dev/null 2>&1
-		sudo systemctl disable tap2wake.service >/dev/null 2>&1
-		sudo systemctl enable daymode.timer >/dev/null 2>&1
-		sudo systemctl enable nightmode.timer >/dev/null 2>&1
 		sudo systemctl daemon-reload >/dev/null 2>&1
 		;;
 	    status)
@@ -891,133 +892,8 @@ if [ ! -z $1 ]; then
 		    fi
 		fi
 		;;
-	    flash)
-		# rerun in background
-		if [ -z $3 ]; then
-                    cs_echo ""
-                    cs_echo "Script will be re run in background - this shell is not needed anymore..."
-		    $(basename $0) update flash background &
-		    exit 0
-		fi
-		if [ $3 != "background" ]; then
-		    exit 0
-		fi
-		# Stop all services which can cause problems during flash
-		sudo systemctl stop autoapp.service
-		sudo systemctl stop disconnect.service
-		sudo systemctl stop disconnect.timer
-		sudo systemctl stop shutdown.service
-		sudo systemctl stop shutdown.timer
-		sudo shutdown -c
-		sudo mount -o remount,ro /boot
-		sudo mount -o remount,ro /
-		clear > /dev/tty3
-		echo "${MAGENTA}${BOLD}Crankshaft Management Tool v$version is executing command...${RESET}" > /dev/tty3
-		echo "" > /dev/tty3
-		for _device in /sys/block/*/device; do
-		    if echo $(readlink -f "$_device")|egrep -q "usb"; then
-		        _disk=$(echo "$_device" | cut -f4 -d/)
-			DEVICE="/dev/${_disk}1"
-			PARTITION="${_disk}1"
-			LABEL=$(sudo blkid /dev/${PARTITION} | sed 's/.*LABEL="//' | cut -d'"' -f1)
-			FSTYPE=$(sudo blkid /dev/${PARTITION} | sed 's/.*TYPE="//' | cut -d'"' -f1)
-			echo "Detected Drive: ${CYAN}${BOLD}${PARTITION}${RESET}" > /dev/tty3
-			echo "Label 1st Part: ${GREEN}${BOLD}${LABEL}${RESET}" > /dev/tty3
-			echo "PartFilesystem: ${YELLOW}${BOLD}${FSTYPE}${RESET}" > /dev/tty3
-			echo "" > /dev/tty3
-			if [ $FSTYPE == "fat" ] || [ $FSTYPE == "vfat" ] || [ $FSTYPE == "ext3" ] || [ $FSTYPE == "ext4" ]; then
-			    sudo umount /tmp/${PARTITION} >/dev/null 2>&1
-			    sudo mkdir /tmp/${PARTITION} >/dev/null 2>&1
-			    sudo mount -t auto ${DEVICE} /tmp/${PARTITION}
-			    if [ $? -ne 0 ]; then
-				echo "${RED}${BOLD}Mount was not possible - skipping drive...${RESET}" > /dev/tty3
-				echo "" > /dev/tty3
-			    else
-				echo "${GREEN}${BOLD}Mount successfull - check for update file...${RESET}" > /dev/tty3
-				echo "" > /dev/tty3
-				UPDATEFILE=$(ls /tmp/${PARTITION} | grep .*crankshaft-ng.img | head -1)
-				if [ ! -z ${UPDATEFILE} ]; then
-				    echo "${CYAN}${BOLD}Update found! - ${UPDATEFILE}${RESET}" > /dev/tty3
-				    echo "" > /dev/tty3
-				    echo "${YELLOW}${BOLD}Checking file...${RESET}" > /dev/tty3
-				    echo "" > /dev/tty3
-				    MD5FILE=$(sudo sh -c 'pv /tmp/'${PARTITION}'/'${UPDATEFILE}' 2>/dev/tty3 | md5sum | cut -d" " -f1')
-				    MD5SOURCE=$(cat /tmp/${PARTITION}/${UPDATEFILE}.md5)
-                                    SIZE=$(($(wc -c < "/tmp/${PARTITION}/${UPDATEFILE}") / 1024 / 1024 / 1014))
-				    echo $MD5FILE > /dev/tty3
-				    echo $MD5SOURCE > /dev/tty3
-				    if [ "$MD5FILE" == "$MD5SOURCE" ]; then
-					clear > /dev/tty3
-					echo "${MAGENTA}${BOLD}Crankshaft Management Tool v$version is executing command...${RESET}" > /dev/tty3
-					echo "" > /dev/tty3
-					echo "${GREEN}${BOLD}Image is undemaged and ready to flash!${RESET}" > /dev/tty3
-					echo "" > /dev/tty3
-			                echo "${YELLOW}${BOLD}Backup config files from crankshaft...${RESET}" > /dev/tty3
-			                echo "" > /dev/tty3
-			                echo "${RED}${BOLD}Don't remove USB drive on first boot to make restore of backup possible!${RESET}" > /dev/tty3
-			                echo "${RED}${BOLD}Backup USB drive will be auto detected. Restore attempt will executed only one time!${RESET}" > /dev/tty3
-			                echo "" > /dev/tty3
-                                        sudo rm -rf /tmp/${PARTITION}/cs-backup
-                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup/boot/crankshaft
-                                        sudo mkdir -p /tmp/${PARTITION}/cs-backup/etc
-                                        sudo cp -f /boot/config.txt /tmp/${PARTITION}/cs-backup/boot/
-                                        sudo cp -f /boot/crankshaft/crankshaft_env.sh /tmp/${PARTITION}/cs-backup/boot/crankshaft/
-                                        sudo cp -f /boot/crankshaft/gpio2kbd.cfg /tmp/${PARTITION}/cs-backup/boot/crankshaft/
-                                        sudo cp -f /boot/crankshaft/startup.py /tmp/${PARTITION}/cs-backup/boot/crankshaft/
-                                        sudo cp -f /boot/crankshaft/startup.sh /tmp/${PARTITION}/cs-backup/boot/crankshaft/
-                                        sudo cp -f /boot/crankshaft/triggerhappy.conf /tmp/${PARTITION}/cs-backup/boot/crankshaft/
-                                        sudo cp -f /boot/crankshaft/brightness /tmp/${PARTITION}/cs-backup/boot/crankshaft/
-                                        sudo cp -f /boot/crankshaft/volume /tmp/${PARTITION}/cs-backup/boot/crankshaft/
-                                        sudo cp -f /boot/crankshaft/openauto.ini /tmp/${PARTITION}/cs-backup/boot/crankshaft/
-                                        sudo cp -f /etc/timezone /tmp/${PARTITION}/cs-backup/etc/
-					echo "" > /dev/tty3
-					echo "${CYAN}${BOLD}Starting flash in    seconds...${RESET}" > /dev/tty3
-                                        setterm -cursor off > /dev/tty3
-                                        for i in {10..01}
-                                        do
-                                        tput cup 10 18 > /dev/tty3
-                                        echo -n "$i" > /dev/tty3
-                                        sleep 1
-                                        done
-                                        tput cup 10 18 > /dev/tty3
-                                        echo -n "00" > /dev/tty3
-					echo "" > /dev/tty3
-					echo "" > /dev/tty3
-					echo "${CYAN}${BOLD}Start...${RESET}" > /dev/tty3
-					echo "" > /dev/tty3
-					sleep 10
-					sudo dd if=/tmp/${PARTITION}/${UPDATEFILE} bs=1M | pv -s${SIZE}G 2>/dev/tty3 | sudo dd of=/dev/mmcblk0
-                                        if [ $? -ne 0 ]; then
-					    echo "${RED}${BOLD}Flashing failed! - System will be broken!${RESET}" > /dev/tty3
-					    echo "" > /dev/tty3
-					    echo "${RED}${BOLD}Shutdown in 10 seconds - Flash sdcard manually!!!${RESET}" > /dev/tty3
-					    sleep 10
-                                            sudo init 0
-                                        else
-                                            # flash ok - hard system reboot
-                                            sudo sh -c 'echo b > /proc/sysrq-trigger'
-                                        fi
-				    else
-					echo "" > /dev/tty3
-					echo "${RED}${BOLD}Image check has failed - abort.${RESET}" > /dev/tty3
-					echo "" > /dev/tty3
-					echo "${RED}${BOLD}System will reboot in 30 sec.${RESET}" > /dev/tty3
-                                        sleep 30
-					sudo init 6
-				    fi
-				else
-				    echo "No update file in this drive." > /dev/tty3
-				    echo "" > /dev/tty3
-				fi
-				sudo umount /tmp/${PARTITION}
-				sudo rmdir /tmp/${PARTITION}
-			    fi
-			fi
-		    fi
-		done
-		;;
 	    *)
-		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft update udev|csmt|flash${RESET}"
+		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft update udev|csmt${RESET}"
 		;;
 	esac
     fi
@@ -1321,12 +1197,6 @@ else
     echo "update                        Handle Updates"
     echo "     |- udev                  - Check And Update udev Rules For Device Detection"
     echo "     |- csmt                  - Check And Update Crankshaft Management Tool"
-    echo "     |- flash                 - Search for updates on usb drives and flash sd card"
-    echo "                                Warning: This is a dirty flash of sd card!"
-    echo "                                Usually all works fine but if something fails your"
-    echo "                                system won't boot anymore. If happened your have to"
-    echo "                                flash the"
-    echo "                                sdcard manually!"
     echo ""
     echo "version                       Show Vesion Of CSMT"
 fi
