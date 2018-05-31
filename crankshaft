@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.4.5
+version=0.4.6
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -725,7 +725,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable display.service >/dev/null 2>&1
 		sudo systemctl enable update.service >/dev/null 2>&1
 		sudo systemctl enable usbrestore.service >/dev/null 2>&1
-		sudo systemctl enable usbflash.service >/dev/null 2>&1
+		sudo systemctl enable usbdetect.service >/dev/null 2>&1
 		sudo systemctl enable user_startup.service >/dev/null 2>&1
 		sudo systemctl enable daymode.timer >/dev/null 2>&1
 		sudo systemctl enable nightmode.timer >/dev/null 2>&1
