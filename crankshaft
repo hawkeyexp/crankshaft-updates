@@ -1,12 +1,13 @@
 #!/bin/bash
 
-version=0.4.6
+version=0.4.7
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
 source /boot/crankshaft/crankshaft_env.sh
 
 CS_BRIGHTNESS_STORE_FILE=/boot/crankshaft/brightness
+CS_BRIGHTNESS_NIGHT_STORE_FILE=/boot/crankshaft/brightness-night
 CS_VOLUME_STORE_FILE=/boot/crankshaft/volume
 
 # FS functions default mode - ignored on dev mode
@@ -140,8 +141,14 @@ if [ ! -z $1 ]; then
 	    save)
 		if [ -f ${BRIGHTNESS_FILE} ]; then
 		    cs_bootrw
-		    sudo sh -c 'cat '${BRIGHTNESS_FILE}' > '${CS_BRIGHTNESS_STORE_FILE}
-		    cs_echo "Brightness Level Saved"
+                    if [ -f /tmp/night_mode_enabled ]; then
+                        sudo sh -c 'cat '${BRIGHTNESS_FILE}' > '${CS_BRIGHTNESS_NIGHT_STORE_FILE}
+                        cs_echo "Brightness Level Night Saved"
+                    else
+                        sudo sh -c 'cat '${BRIGHTNESS_FILE}' > '${CS_BRIGHTNESS_STORE_FILE}
+                        cs_echo "Brightness Level Day Saved"
+		    fi
+
 		    cs_bootro
 		else
         	    cs_echo "No device brightness file present"
@@ -150,14 +157,25 @@ if [ ! -z $1 ]; then
 		;;
 	    restore)
 		if [ -f ${BRIGHTNESS_FILE} ]; then
-		    if [ -f ${CS_BRIGHTNESS_STORE_FILE} ]; then
-			LVL=`cat ${CS_BRIGHTNESS_STORE_FILE}`
-			echo ${LVL} > ${BRIGHTNESS_FILE}
-			cs_echo "Brightness Level Restored"
-		    else
-			echo ${BR_MAX} > ${BRIGHTNESS_FILE}
-			cs_echo "Brightness Level Restored by default value"
-		    fi
+		    if [ -f /tmp/night_mode_enabled ]; then
+		        if [ -f ${CS_BRIGHTNESS_NIGHT_STORE_FILE} ]; then
+			    LVL=`cat ${CS_BRIGHTNESS_NIGHT_STORE_FILE}`
+			    echo ${LVL} > ${BRIGHTNESS_FILE}
+			    cs_echo "Brightness Level Night Restored"
+		        else
+			    echo ${BR_MAX} > ${BRIGHTNESS_FILE}
+			    cs_echo "Brightness Level Night Restored by default value"
+		        fi
+                    else
+		        if [ -f ${CS_BRIGHTNESS_STORE_FILE} ]; then
+			    LVL=`cat ${CS_BRIGHTNESS_STORE_FILE}`
+			    echo ${LVL} > ${BRIGHTNESS_FILE}
+			    cs_echo "Brightness Level Day Restored"
+		        else
+			    echo ${BR_MAX} > ${BRIGHTNESS_FILE}
+			    cs_echo "Brightness Level Day Restored by default value"
+		        fi
+                    fi
 		else
     		    cs_echo "No device brightness file present"
 		fi
