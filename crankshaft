@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.5.0
+version=0.5.1
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -891,6 +891,8 @@ if [ ! -z $1 ]; then
 			sudo chmod 666 /etc/udev/rules.d/51-android.rules
 			# add master stuff
 			echo '' > $DEST
+			echo '# Skip storage devices' >> $DEST
+                        echo 'KERNEL!="sd[a-z][0-9], GOTO="SKIP_DEVICE"' > $DEST
 			cat /etc/udev/rules.d/51-android.master >> $DEST
 			# Add action
 			sudo sed -i 's/GROUP="plugdev"$/GROUP="plugdev", RUN+="\/opt\/crankshaft\/usb_action.sh '\''%E\{DEVNAME\}'\''"/' $DEST
