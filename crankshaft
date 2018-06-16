@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.5.1
+version=0.5.4
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -748,6 +748,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable daymode.timer >/dev/null 2>&1
 		sudo systemctl enable nightmode.timer >/dev/null 2>&1
 		sudo systemctl enable tap2wake.service >/dev/null 2>&1
+		sudo systemctl enable rpicamserver.service >/dev/null 2>&1
 		sudo systemctl disable autoapp.service >/dev/null 2>&1
 		sudo systemctl disable ssh.service >/dev/null 2>&1
 		sudo systemctl disable wpa_supplicant.service >/dev/null 2>&1
@@ -1010,25 +1011,25 @@ if [ ! -z $1 ]; then
 		if [ ! -z $3 ]; then
 		    DEVICE=$3
 		    DEVICE="${DEVICE}1"
-		    if [ ! -d /media/usb ]; then
+		    if [ ! -d /media/USB ]; then
 			cs_systemrw
-			sudo mkdir /media/usb
+			sudo mkdir /media/USB
 			cs_systemro
 		    fi
-		    if sudo mount | grep /media/usb > /dev/null; then
+		    if sudo mount | grep /media/USB > /dev/null; then
 			cs_echo "${YELLOW}${BOLD}Destination folder is still mounted - unmount it before new mount!${RESET}"
 			exit 0
 		    fi
-		    sudo mount -o sync /dev/$DEVICE /media/usb
+		    sudo mount -o sync /dev/$DEVICE /media/USB
 		    if [ $? -ne 0 ]; then
 			cs_echo "${RED}${BOLD}Mount was not possible - abbort...${RESET}"
 		    else
-			cs_echo "${GREEN}${BOLD}Mount successfull${RESET} - Device /dev/$DEVICE ($(sudo blkid /dev/$DEVICE | sed 's/.*LABEL="//' | cut -d'"' -f1))  mountet to /media/usb"
+			cs_echo "${GREEN}${BOLD}Mount successfull${RESET} - Device /dev/$DEVICE ($(sudo blkid /dev/$DEVICE | sed 's/.*LABEL="//' | cut -d'"' -f1))  mountet to /media/USB"
 		    fi
 		fi
 		;;
 	    umount)
-		sudo umount /media/usb
+		sudo umount /media/USB
 		if [ $? -ne 0 ]; then
 		    cs_echo "${RED}${BOLD}Unmount was not possible - abbort...${RESET}"
 		    cs_echo ""
@@ -1039,7 +1040,7 @@ if [ ! -z $1 ]; then
 		fi
 		;;
 	    *)
-		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft usb list|mount|unmount${RESET}"
+		cs_echo "${YELLOW}${BOLD}Syntax: crankshaft usb list|mount|umount${RESET}"
 		;;
 	esac
     fi
@@ -1170,6 +1171,7 @@ else
     echo "      |- on                   - Enable Display"
     echo "      |- off                  - Disable Display"
     echo "      |- autodetect           - Try to detect display by usb touch controller and setup"
+    echo "                                (this feature is not ready for use - only prepared for further versions!)"
     echo ""
     echo "brightness                    Handle Display Backlight"
     echo "         |- min               - Set Display Brightness To Min"
