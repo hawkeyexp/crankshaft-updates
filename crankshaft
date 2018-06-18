@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.5.4
+version=0.5.5
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -748,7 +748,7 @@ if [ ! -z $1 ]; then
 		sudo systemctl enable daymode.timer >/dev/null 2>&1
 		sudo systemctl enable nightmode.timer >/dev/null 2>&1
 		sudo systemctl enable tap2wake.service >/dev/null 2>&1
-		sudo systemctl enable rpicamserver.service >/dev/null 2>&1
+		sudo systemctl disable rpicamserver.service >/dev/null 2>&1
 		sudo systemctl disable autoapp.service >/dev/null 2>&1
 		sudo systemctl disable ssh.service >/dev/null 2>&1
 		sudo systemctl disable wpa_supplicant.service >/dev/null 2>&1
@@ -763,6 +763,9 @@ if [ ! -z $1 ]; then
 		sudo systemctl disable hwclock-save.service >/dev/null 2>&1
 		sudo systemctl disable bluetooth.service >/dev/null 2>&1
 		sudo systemctl disable hciuart.service >/dev/null 2>&1
+		sudo systemctl disable hostapd.service >/dev/null 2>&1
+		sudo systemctl disable dnsmasq.service >/dev/null 2>&1
+		sudo systemctl disable hotspot.service >/dev/null 2>&1
 		sudo systemctl daemon-reload >/dev/null 2>&1
 		;;
 	    status)
@@ -963,6 +966,7 @@ if [ ! -z $1 ]; then
 		sudo sh -c "echo '# RPI Camera Module' >> /boot/config.txt"
 		sudo sh -c 'echo "start_x=1" >> /boot/config.txt'
                 sudo touch /etc/button_camera_visible
+                sudo systemctl enable rpicamserver.service >/dev/null 2>&1
 		cs_bootro
 		cs_systemro
 		cs_echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
@@ -975,6 +979,7 @@ if [ ! -z $1 ]; then
     		sudo sed -i '/start_x/d' /boot/config.txt
 		sudo sed -i '/./,/^$/!d' /boot/config.txt
                 sudo rm /etc/button_camera_visible
+                sudo systemctl disable rpicamserver.service >/dev/null 2>&1
 		cs_bootro
 		cs_systemro
 		cs_echo "${RED}${BOLD}Reboot needed to activate!${RESET}"
