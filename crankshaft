@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.6.2
+version=0.6.3
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -1103,6 +1103,17 @@ if [ ! -z $1 ]; then
 		else
 		    SHOW_X11=$X11_PIN
 		fi
+		if [ ${ANDROID_PIN} -ne 0 ]; then
+		    ANDROID=$(gpio -g read $ANDROID_PIN)
+		    if [ ${#ANDROID_PIN} -ne 2 ]; then
+			SHOW_ANDROID="0"$ANDROID_PIN
+		    else
+			SHOW_ANDROID=$ANDROID_PIN
+		    fi
+		else
+		    ANDROID=0
+		    SHOW_ANDROID="--"
+		fi
 
 		cs_echo "${YELLOW}${BOLD}Dev Mode${RESET}"
 		cs_echo "---------------------------------------------------------------"
@@ -1131,6 +1142,20 @@ if [ ! -z $1 ]; then
 		    cs_echo "${GREEN}${BOLD}Untriggered${RESET}"
 		else
 		    cs_echo "${RED}${BOLD}Triggered${RESET}"
+		fi
+
+		cs_echo ""
+		cs_echo "${YELLOW}${BOLD}Android Connected${RESET}"
+		cs_echo "---------------------------------------------------------------"
+		cs_echo "GPIO: $SHOW_ANDROID - State: $ANDROID"
+		if [ $ANDROID -eq 0 ]; then
+		    cs_echo "${GREEN}${BOLD}Untriggered${RESET}"
+		else
+		    if [ "$SHOW_ANDROID" == "--" ]; then
+			cs_echo "${RED}${BOLD}disabled${RESET}"
+		    else
+			cs_echo "${RED}${BOLD}Triggered${RESET}"
+		    fi
 		fi
 		;;
 	    help)
