@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.6.1
+version=0.6.2
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -895,9 +895,10 @@ if [ ! -z $1 ]; then
 			echo '# Skip storage devices' >> $DEST
                         echo 'KERNEL=="sd*", GOTO="SKIP_DEVICE"' >> $DEST
                         echo 'KERNEL=="sg*", GOTO="SKIP_DEVICE"' >> $DEST
+                        echo 'SUBSYSTEM!="usb", GOTO="SKIP_DEVICE"' >> $DEST
 			cat /etc/udev/rules.d/51-android.master >> $DEST
 			# Add action
-			sudo sed -i 's/GROUP="plugdev"$/GROUP="plugdev", RUN+="\/opt\/crankshaft\/usb_action.sh '\''%E\{DEVNAME\}'\''"/' $DEST
+			sudo sed -i 's/GROUP="plugdev"$/GROUP="plugdev", RUN+="\/opt\/crankshaft\/usb_action.sh '\''%E\{DEVNAME\}'\'' add"/' $DEST
 			# Add disconnect action
 			echo '' >> $DEST
 			echo '# Disconnect action' >> $DEST
