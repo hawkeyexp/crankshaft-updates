@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.6.0
+version=0.6.1
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -330,11 +330,11 @@ if [ ! -z $1 ]; then
 			sudo systemctl stop disconnect.service >/dev/null 2>&1
 			cs_systemrw
 			if [ ! -z $DISCONNECTION_SCREEN_POWEROFF_SECS ]; then
-			    if [ -f /etc/first_start_done ]; then
+			    if [ -f /etc/cs_first_start_done ]; then
 				sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_SCREEN_POWEROFF_SECS's/' /etc/systemd/system/disconnect.timer
 			    else
 				sudo sed -i 's/^OnActiveSec=.*/OnActiveSec=300s/' /etc/systemd/system/disconnect.timer
-				sudo touch /etc/first_start_done
+				sudo touch /etc/cs_first_start_done
 			    fi
 			fi
 			cs_systemro
@@ -381,11 +381,11 @@ if [ ! -z $1 ]; then
 		sudo systemctl stop shutdown.service >/dev/null 2>&1
 		cs_systemrw
 		if [ ! -z $DISCONNECTION_SCREEN_POWEROFF_SECS ]; then
-		    if [ -f /etc/first_start_done ]; then
+		    if [ -f /etc/cs_first_start_done ]; then
 			sudo sed -i 's/^OnActiveSec=.*/OnActiveSec='$DISCONNECTION_SCREEN_POWEROFF_SECS's/' /etc/systemd/system/disconnect.timer
 		    else
 			sudo sed -i 's/^OnActiveSec=.*/OnActiveSec=300s/' /etc/systemd/system/disconnect.timer
-			sudo touch /etc/first_start_done
+			sudo touch /etc/cs_first_start_done
 		    fi
 		fi
 		if [ ! -z $DISCONNECTION_POWEROFF_MINS ]; then
@@ -1167,7 +1167,7 @@ if [ ! -z $1 ]; then
         echo "[${CYAN}${BOLD} INFO ${RESET}] Resizing filesystem..." >/dev/tty3
         echo "[${CYAN}${BOLD} INFO ${RESET}] *******************************************************" >/dev/tty3
 	sudo resize2fs /dev/mmcblk0p2 >/dev/null 2>&1
-        sudo touch /etc/resize_done
+        sudo touch /etc/cs_resize_done
 	cs_systemro
     fi
 
