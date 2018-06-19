@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.5.9
+version=0.6.0
 
 source /opt/crankshaft/crankshaft_default_env.sh
 source /opt/crankshaft/crankshaft_system_env.sh
@@ -1149,20 +1149,23 @@ if [ ! -z $1 ]; then
         echo "[${CYAN}${BOLD} INFO ${RESET}] *******************************************************" >/dev/tty3
         echo "[${CYAN}${BOLD} INFO ${RESET}] Current partition size: $currentsize" >/dev/tty3
         echo "[${CYAN}${BOLD} INFO ${RESET}] *******************************************************" >/dev/tty3
-        echo "[${CYAN}${BOLD} INFO ${RESET}] " >/dev/tty3
 	cs_echo ""
 	sleep 2
 	sudo parted /dev/mmcblk0 resizepart 2 100% >/dev/null 2>&1
 	newsize=$(sudo parted /dev/mmcblk0p2 print | tail -n2 | head -n1 | awk {'print $4'})
 	cs_echo "New partition size: $newsize"
+        echo "[${CYAN}${BOLD} INFO ${RESET}] " >/dev/tty3
         echo "[${CYAN}${BOLD} INFO ${RESET}] *******************************************************" >/dev/tty3
         echo "[${CYAN}${BOLD} INFO ${RESET}] New partition size: $newsize" >/dev/tty3
         echo "[${CYAN}${BOLD} INFO ${RESET}] *******************************************************" >/dev/tty3
-        echo "[${CYAN}${BOLD} INFO ${RESET}] " >/dev/tty3
 	cs_echo ""
 	sleep 2
 	cs_echo "Start filesystem resize:"
 	cs_echo ""
+        echo "[${CYAN}${BOLD} INFO ${RESET}] " >/dev/tty3
+        echo "[${CYAN}${BOLD} INFO ${RESET}] *******************************************************" >/dev/tty3
+        echo "[${CYAN}${BOLD} INFO ${RESET}] Resizing filesystem..." >/dev/tty3
+        echo "[${CYAN}${BOLD} INFO ${RESET}] *******************************************************" >/dev/tty3
 	sudo resize2fs /dev/mmcblk0p2 >/dev/null 2>&1
         sudo touch /etc/resize_done
 	cs_systemro
